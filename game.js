@@ -229,6 +229,7 @@ function saveData() {
 
 window.onload = async () => {
     tg.ready(); tg.expand();
+    try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) {}
     if (typeof AudioManager !== 'undefined') AudioManager.init();
     
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
@@ -510,6 +511,20 @@ function renderGrid(grid) {
             container.appendChild(cell);
         });
     });
+    updateProgressBar();
+}
+
+function updateProgressBar() {
+    if (!state.currentAnswers) return;
+    const total = Object.keys(state.currentAnswers).length;
+    if (total === 0) return;
+    const emptyCells = Array.from(document.querySelectorAll('.cell.empty'));
+    const filled = emptyCells.filter(c => c.textContent !== '').length;
+    
+    const fillEl = document.getElementById('game-progress-fill');
+    const textEl = document.getElementById('game-progress-text');
+    if (fillEl) fillEl.style.width = `${(filled / total) * 100}%`;
+    if (textEl) textEl.textContent = `${filled}/${total}`;
 }
 
 function inputNum(n) {
@@ -518,6 +533,7 @@ function inputNum(n) {
     state.selected.textContent = n;
     saveCurrentToSession();
     validateLines();
+    updateProgressBar();
     checkWin();
 }
 
@@ -723,7 +739,9 @@ function useHint() {
             c.textContent = ans;
             state.inventory.hints--;
             saveCurrentToSession();
-            updateUI(); checkWin(); return;
+            updateUI();
+            updateProgressBar();
+            checkWin(); return;
         }
     }
 }
@@ -752,7 +770,9 @@ function useCrystal() {
         }
     }
     saveCurrentToSession();
-    updateUI(); checkWin();
+    updateUI();
+    updateProgressBar();
+    checkWin();
 }
 
 function startBot() {
@@ -859,7 +879,7 @@ function renderLevelMap() {
     if (state.currentDiffTab === 'medium') unlockedCount = state.unlockedMedium;
     if (state.currentDiffTab === 'hard') unlockedCount = state.unlockedHard;
     if (state.currentDiffTab === 'expert') unlockedCount = state.unlockedExpert;
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= 50; i++) {
         const btn = document.createElement('button');
         const isUnlocked = i <= unlockedCount;
         btn.className = `level-btn ${isUnlocked ? 'unlocked' : 'locked'}`;

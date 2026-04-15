@@ -70,7 +70,7 @@ const tg = window.Telegram?.WebApp || {
 const API_URL = window.location.origin;
 
 const ServerAPI = {
-    enabled: false, // Offline mode - game works without backend
+    enabled: true, // Enable backend for Telegram Mini App
     getTId() { return tg.initDataUnsafe?.user?.id || 12345; },
     async call(path, method = 'GET', body = null) {
         if (!this.enabled) return null;

@@ -2,6 +2,8 @@ import os
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -10,19 +12,41 @@ load_dotenv()
 
 app = FastAPI(title="MathX API")
 
-@app.get("/")
-@app.head("/")
-async def root():
-    return {"message": "MathX Infinity API", "status": "running"}
-
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # В продакшене лучше указать конкретные домены
-    allow_credentials=False, # Должно быть False, если используем "*"
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Маршруты для статических файлов (css, js, аудио)
+@app.get("/style.css")
+async def get_css():
+    return FileResponse("style.css")
+
+@app.get("/game.js")
+async def get_game_js():
+    return FileResponse("game.js")
+
+@app.get("/generator.js")
+async def get_generator_js():
+    return FileResponse("generator.js")
+
+@app.get("/audio.js")
+async def get_audio_js():
+    return FileResponse("audio.js")
+
+@app.get("/paulyudin-chill-silent-bloom-chill.mp3")
+async def get_audio_file():
+    return FileResponse("paulyudin-chill-silent-bloom-chill.mp3")
+
+@app.get("/")
+@app.head("/")
+async def root():
+    """Главная страница игры"""
+    return FileResponse("index.html")
 
 # Инициализация Supabase
 url: str = os.environ.get("SUPABASE_URL")

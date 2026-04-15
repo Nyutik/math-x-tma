@@ -1,0 +1,28 @@
+# Documentation
+*.md
+README.MD
+TODO.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Web
+node_modules/
+dist/
+.DS_Store
+
+# Audio files (keep only if small)
+# *.mp3
+# *.wav

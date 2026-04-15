@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -21,53 +22,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Маршруты для статических файлов (css, js, аудио)
-@app.get("/style.css")
-async def get_css():
-    return FileResponse("style.css")
-
-@app.get("/game.js")
-async def get_game_js():
-    return FileResponse("game.js")
-
-@app.get("/generator.js")
-async def get_generator_js():
-    return FileResponse("generator.js")
-
-@app.get("/audio.js")
-async def get_audio_js():
-    return FileResponse("audio.js")
-
-@app.get("/paulyudin-chill-silent-bloom-chill.mp3")
-async def get_audio_file():
-    return FileResponse("paulyudin-chill-silent-bloom-chill.mp3")
-
-@app.get("/")
-@app.head("/")
-async def root():
-    """Главная страница игры"""
-    return FileResponse("index.html")
-
 # Инициализация Supabase
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
+
+from supabase import create_client, Client
+
 supabase: Client = create_client(url, key)
 
-# Модели данных
+# Вспомогательная функция для удобного доступа к таблицам в схеме mathx
+def db(table_name: str):
+    return supabase.table(table_name)
+
+# Но так как таблицы в схеме mathx, нужно вызывать supabase.schema("mathx").table(table_name)
+# В новых версиях supabase-python это делается так:
+def db(table_name: str):
+    # По умолчанию supabase обращается к public.
+    # Чтобы использовать схему mathx, мы добавляем вызов схемы перед таблицей
+    try:
+        return supabase.schema("mathx").table(table_name)
+    except AttributeError:
+        # Резервный вариант, если версия библиотеки не поддерживает .schema()
+        # В этом случае мы просто укажем схему в названии (иногда так работает)
+        return supabase.table(f"mathx.{table_name}")
+        
+# --- МОДЕЛИ PYDANTIC ---
 class UserAuth(BaseModel):
     telegram_id: int
     username: Optional[str] = None
     display_name: Optional[str] = None
     referred_by: Optional[int] = None
-
-class InventoryItem(BaseModel):
-    telegram_id: int
-    item_type: str
-    item_name: str
-
-class MissionClaim(BaseModel):
-    telegram_id: int
-    mission_id: str
 
 class SyncState(BaseModel):
     telegram_id: int
@@ -82,200 +66,147 @@ class GameScore(BaseModel):
     solve_time: int
     points: int
 
-# Эндпоинты
+# --- ЭНДПОИНТЫ API ---
 
 @app.post("/auth")
 async def auth_user(user: UserAuth):
-    """Авторизация или регистрация пользователя с поддержкой рефералов"""
     try:
-        # Ищем пользователя
-        res = supabase.table("profiles").select("*").eq("telegram_id", user.telegram_id).execute()
-
+        print(f"Auth request: {user.telegram_id}")
+        # Заменяем supabase.table на supabase.schema("mathx").table
+        res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", user.telegram_id).execute()
+        
         if len(res.data) > 0:
-            # Исправляем: используем корректный способ обновления времени
-            from datetime import datetime
-            supabase.table("profiles").update({"last_login": datetime.utcnow().isoformat()}).eq("telegram_id", user.telegram_id).execute()
-            return {"status": "success", "user": res.data[0]}
+            user_data = res.data[0]
+            try:
+                supabase.schema("mathx").table("profiles").update({"last_login": datetime.now().isoformat()}).eq("telegram_id", user.telegram_id).execute()
+            except Exception as e:
+                print(f"Skipping last_login update: {e}")
+            return {"status": "success", "user": user_data}
         else:
-            # Создаем нового игрока
+            print(f"Creating new user: {user.telegram_id}")
             new_user = {
-                "telegram_id": user.telegram_id,
-                "username": user.username,
-                "display_name": user.display_name,
-                "coins": 100,
-                "xp": 0,
+                "telegram_id": user.telegram_id, 
+                "username": user.username, 
+                "display_name": user.display_name, 
+                "coins": 100, 
+                "xp": 0, 
                 "level": 1
             }
-            res = supabase.table("profiles").insert(new_user).execute()
-            new_user_data = res.data[0]
-
-            # Если есть реферер, начисляем бонусы
+            res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
+            if not res.data:
+                raise Exception("Failed to create user in Supabase")
+            
             if user.referred_by and user.referred_by != user.telegram_id:
-                # Начисляем 50 монет рефереру
-                supabase.rpc("increment_coins", {
-                    "t_id": user.referred_by, 
-                    "amount": 50
-                }).execute()
-                # Бонус новому игроку (рефералу)
-                supabase.table("profiles").update({"coins": 150}).eq("telegram_id", user.telegram_id).execute()
-                new_user_data["coins"] = 150
-
-            return {"status": "created", "user": new_user_data}
+                try:
+                    supabase.rpc("increment_coins", {"t_id": user.referred_by, "amount": 50}).execute()
+                    supabase.schema("mathx").table("profiles").update({"coins": 150}).eq("telegram_id", user.telegram_id).execute()
+                    res.data[0]["coins"] = 150
+                except: pass
+                
+            return {"status": "created", "user": res.data[0]}
     except Exception as e:
+        print(f"ERROR /auth: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/stats/{telegram_id}")
 async def get_user_stats(telegram_id: int):
-    """Получение детальной статистики игрока из разных таблиц"""
     try:
-        user_res = supabase.table("profiles").select("id, xp, level, coins, daily_streak").eq("telegram_id", telegram_id).single().execute()
+        user_res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", telegram_id).single().execute()
         p_id = user_res.data["id"]
-
-        # Считаем количество завершенных игр
-        games_res = supabase.table("games").select("id", count="exact").eq("player_id", p_id).eq("is_completed", True).execute()
-        total_solved = games_res.count if games_res.count is not None else 0
-
-        # Получаем лучший результат времени
-        scores_res = supabase.table("scores").select("solve_time_seconds").eq("player_id", p_id).order("solve_time_seconds", desc=False).limit(1).execute()
-        best_time = scores_res.data[0]["solve_time_seconds"] if scores_res.data else 0
-
+        
+        try:
+            games_res = supabase.schema("mathx").table("games").select("id", count="exact").eq("player_id", p_id).eq("is_completed", True).execute()
+            total_solved = games_res.count if games_res.count is not None else 0
+        except: total_solved = 0
+            
         return {
-            "xp": user_res.data["xp"],
-            "level": user_res.data["level"],
-            "coins": user_res.data["coins"],
-            "streak": user_res.data["daily_streak"],
-            "total_solved": total_solved,
-            "best_time": best_time
+            "xp": user_res.data.get("xp", 0),
+            "level": user_res.data.get("level", 1),
+            "coins": user_res.data.get("coins", 0),
+            "streak": user_res.data.get("daily_streak", 0),
+            "total_solved": total_solved
         }
     except Exception as e:
+        print(f"ERROR /stats: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/game/start")
 async def start_game_record(data: dict):
-    """Фиксируем начало игры в таблице games"""
     try:
-        user_res = supabase.table("profiles").select("id").eq("telegram_id", data["telegram_id"]).single().execute()
-        supabase.table("games").insert({
-            "player_id": user_res.data["id"],
-            "difficulty": data["difficulty"],
+        user_res = supabase.schema("mathx").table("profiles").select("id").eq("telegram_id", data["telegram_id"]).single().execute()
+        supabase.schema("mathx").table("games").insert({
+            "player_id": user_res.data["id"], 
+            "difficulty": data["difficulty"], 
             "is_completed": False
         }).execute()
         return {"status": "game_started"}
-    except Exception as e: return {"error": str(e)}
-
-class MissionClaim(BaseModel):
-    telegram_id: int
-    mission_id: str
-
-@app.get("/missions/{telegram_id}")
-async def get_daily_missions(telegram_id: int):
-    """Получение списка заданий на сегодня и прогресса"""
-    try:
-        user_res = supabase.table("profiles").select("id").eq("telegram_id", telegram_id).single().execute()
-        p_id = user_res.data["id"]
-
-        # Считаем, сколько игр завершено СЕГОДНЯ
-        import datetime
-        today = datetime.date.today().isoformat()
-        games_res = supabase.table("games").select("id").eq("player_id", p_id).eq("is_completed", True).gte("completed_at", today).execute()
-        completed_today = len(games_res.data)
-
-        # Список статичных заданий (можно расширить)
-        missions = [
-            {"id": "solve_3", "title": "Реши 3 уровня", "goal": 3, "progress": min(completed_today, 3), "reward": 50, "icon": "check-circle"},
-            {"id": "solve_10", "title": "Математик: 10 уровней", "goal": 10, "progress": min(completed_today, 10), "reward": 200, "icon": "zap"}
-        ]
-        
-        return missions
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/missions/claim")
-async def claim_mission_reward(claim: MissionClaim):
-    """Выдача награды за выполненное задание"""
-    # Здесь можно добавить проверку, не забирал ли пользователь уже награду сегодня
-    # Для простоты пока просто начисляем монеты
-    rewards = {"solve_3": 50, "solve_10": 200}
-    amount = rewards.get(claim.mission_id, 0)
-    
-    if amount > 0:
-        supabase.rpc("increment_coins", {"t_id": claim.telegram_id, "amount": amount}).execute()
-        return {"status": "reward_claimed", "amount": amount}
-    return {"status": "error"}
-
+        print(f"ERROR /game/start: {str(e)}")
+        return {"error": str(e)}
 
 @app.post("/sync")
 async def sync_progress(data: SyncState):
-    """Синхронизация прогресса игрока"""
     try:
-        res = supabase.table("profiles").update({
+        print(f"Sync request: {data.telegram_id}")
+        update_fields = {
             "coins": data.coins,
             "xp": data.xp,
-            "level": data.level,
-            "daily_streak": data.streak
-        }).eq("telegram_id", data.telegram_id).execute()
+            "level": data.level
+        }
+        try:
+            supabase.schema("mathx").table("profiles").update({**update_fields, "daily_streak": data.streak}).eq("telegram_id", data.telegram_id).execute()
+        except:
+            supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
+            
         return {"status": "synced"}
     except Exception as e:
+        print(f"ERROR /sync: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/score")
 async def save_score(score: GameScore):
-    """Сохранение рекорда"""
     try:
-        # Сначала получаем UUID профиля
-        user_res = supabase.table("profiles").select("id").eq("telegram_id", score.telegram_id).single().execute()
-        profile_id = user_res.data["id"]
-        
-        new_score = {
-            "player_id": profile_id,
+        user_res = supabase.schema("mathx").table("profiles").select("id").eq("telegram_id", score.telegram_id).single().execute()
+        p_id = user_res.data["id"]
+        supabase.schema("mathx").table("scores").insert({
+            "player_id": p_id,
             "difficulty": score.difficulty,
             "solve_time_seconds": score.solve_time,
             "points_earned": score.points
-        }
-        supabase.table("scores").insert(new_score).execute()
+        }).execute()
         return {"status": "score_saved"}
     except Exception as e:
+        print(f"ERROR /score: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/leaderboard")
 async def get_leaderboard():
-    """Получение топ-10 игроков по опыту"""
     try:
-        res = supabase.table("profiles").select("display_name, username, xp, level").order("xp", desc=True).limit(10).execute()
+        res = supabase.schema("mathx").table("profiles").select("display_name, username, xp, level").order("xp", desc=True).limit(10).execute()
         return res.data
     except Exception as e:
+        print(f"ERROR /leaderboard: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/inventory/add")
-async def add_to_inventory(item: InventoryItem):
-    """Добавление предмета в инвентарь (покупка)"""
-    try:
-        user_res = supabase.table("profiles").select("id").eq("telegram_id", item.telegram_id).single().execute()
-        profile_id = user_res.data["id"]
-        
-        new_item = {
-            "player_id": profile_id,
-            "item_type": item.item_type,
-            "item_name": item.item_name
-        }
-        supabase.table("inventory").insert(new_item).execute()
-        return {"status": "item_added"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# --- РАЗДАЧА ФАЙЛОВ ИГРЫ ---
 
-@app.get("/inventory/{telegram_id}")
-async def get_inventory(telegram_id: int):
-    """Получение всех предметов игрока"""
-    try:
-        user_res = supabase.table("profiles").select("id").eq("telegram_id", telegram_id).single().execute()
-        profile_id = user_res.data["id"]
-        
-        res = supabase.table("inventory").select("*").eq("player_id", profile_id).execute()
-        return res.data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/")
+async def read_index():
+    return FileResponse("index.html")
+
+# Список всех статических файлов для явной раздачи
+static_files = ["style.css", "game.js", "generator.js", "audio.js", "paulyudin-chill-silent-bloom-chill.mp3"]
+
+@app.get("/{file_path:path}")
+async def catch_all(file_path: str):
+    if file_path in static_files or file_path.endswith((".js", ".css", ".mp3", ".png", ".jpg", ".svg", ".ico")):
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+    return FileResponse("index.html")
 
 if __name__ == "__main__":
     import uvicorn
+    # Мы используем порт 8000 как основной, если 8000 занят - uvicorn скажет об этом.
     port = int(os.environ.get("PORT", 8000))
+    print(f"Запуск MathX на порту {port}...")
     uvicorn.run(app, host="0.0.0.0", port=port)

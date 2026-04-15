@@ -67,7 +67,7 @@ const tg = window.Telegram?.WebApp || {
     initDataUnsafe: { user: { first_name: "Игрок", id: 12345 } }
 };
 
-const API_URL = "http://localhost:8000";
+const API_URL = window.location.origin;
 
 const ServerAPI = {
     enabled: true,
@@ -505,7 +505,8 @@ function inputNum(n) {
 function validateLines() {
     if (!state.lastGeneratedGrid) return;
     const size = state.lastGeneratedGrid.length;
-    for (let r = 0; r < size - 1; r += 2) {
+    // Горизонтальные
+    for (let r = 0; r < size; r += 2) {
         const line = [];
         for (let c = 0; c < size; c++) {
             const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
@@ -513,6 +514,17 @@ function validateLines() {
         }
         const res = evaluateLine(line);
         const target = document.querySelector(`.cell[data-r="${r}"][data-c="${size-1}"]`);
+        if (target) target.style.color = res ? 'var(--success-color)' : 'var(--accent)';
+    }
+    // Вертикальные
+    for (let c = 0; c < size; c += 2) {
+        const line = [];
+        for (let r = 0; r < size; r++) {
+            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+            line.push(el ? el.textContent : '');
+        }
+        const res = evaluateLine(line);
+        const target = document.querySelector(`.cell[data-r="${size-1}"][data-c="${c}"]`);
         if (target) target.style.color = res ? 'var(--success-color)' : 'var(--accent)';
     }
 }
@@ -561,6 +573,12 @@ function checkWin() {
     state.activeSession = null;
     localStorage.removeItem('mx_active_session');
     if (state.isDaily) state.lastDaily = new Date().toISOString().slice(0, 10);
+    else if (!state.isBattle) {
+        if (state.diff === 'easy' && state.currentLevelNum === state.unlocked) state.unlocked++;
+        else if (state.diff === 'medium' && state.currentLevelNum === state.unlockedMedium) state.unlockedMedium++;
+        else if (state.diff === 'hard' && state.currentLevelNum === state.unlockedHard) state.unlockedHard++;
+        else if (state.diff === 'expert' && state.currentLevelNum === state.unlockedExpert) state.unlockedExpert++;
+    }
     
     const reward = (state.isDaily ? 200 : (state.isBattle ? state.battleStake * 2 : (state.diff === 'hard' ? 50 : 30)));
     state.coins += reward;

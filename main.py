@@ -10,8 +10,8 @@ load_dotenv()
 
 app = FastAPI(title="MathX API")
 
-# Root endpoint
 @app.get("/")
+@app.head("/")
 async def root():
     return {"message": "MathX Infinity API", "status": "running"}
 

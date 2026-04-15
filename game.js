@@ -272,6 +272,8 @@ function initApp() {
     safeSetClick('open-missions', () => { showModal('missions'); });
     safeSetClick('open-gallery', () => { showModal('gallery'); });
     safeSetClick('settings-btn-menu', () => { showModal('settings'); });
+    safeSetClick('next-level-btn', nextLevel);
+    safeSetClick('win-to-menu-btn', () => { closeModal(); switchScreen('menu'); });
     safeSetClick('back-to-menu', handleBackAction);
     safeSetClick('pause-to-menu-btn', handleBackAction);
     safeSetClick('pause-game-btn', pauseGame);
@@ -346,6 +348,17 @@ function handleBackAction() {
     switchScreen('menu');
     if (wasBattle) showModal('battle-lobby');
     else if (!wasDaily) showModal('level');
+}
+
+function nextLevel() {
+    closeModal();
+    if (state.isDaily) {
+        switchScreen('menu');
+    } else if (state.isBattle) {
+        startLevel(state.diff, 'BATTLE');
+    } else {
+        startLevel(state.diff, state.currentLevelNum + 1);
+    }
 }
 
 function initShop() {

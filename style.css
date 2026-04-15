@@ -60,6 +60,8 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; user-select: none; }
 
+i[data-lucide] { width: 20px; height: 20px; display: inline-block; vertical-align: middle; }
+
 body {
     margin: 0; padding: 0;
     font-family: 'Montserrat', sans-serif;

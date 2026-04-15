@@ -10,6 +10,11 @@ load_dotenv()
 
 app = FastAPI(title="MathX API")
 
+# Root endpoint
+@app.get("/")
+async def root():
+    return {"message": "MathX Infinity API", "status": "running"}
+
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,

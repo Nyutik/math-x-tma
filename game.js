@@ -70,7 +70,7 @@ const tg = window.Telegram?.WebApp || {
 const API_URL = window.location.origin;
 
 const ServerAPI = {
-    enabled: true,
+    enabled: false, // Offline mode - game works without backend
     getTId() { return tg.initDataUnsafe?.user?.id || 12345; },
     async call(path, method = 'GET', body = null) {
         if (!this.enabled) return null;
@@ -342,12 +342,14 @@ function initApp() {
 }
 
 function handleBackAction() {
-    const wasDaily = state.isDaily;
-    const wasBattle = state.isBattle;
     closeModal();
+    clearInterval(state.timerInterval);
+    clearInterval(state.botInterval);
     switchScreen('menu');
-    if (wasBattle) showModal('battle-lobby');
-    else if (!wasDaily) showModal('level');
+    state.isGameActive = false;
+    state.activeSession = null;
+    localStorage.removeItem('mx_active_session');
+    updateUI();
 }
 
 function nextLevel() {
@@ -547,24 +549,35 @@ function evaluateLine(line) {
 
 function checkWin() {
     const emptyCells = document.querySelectorAll('.cell.empty');
-    if (Array.from(emptyCells).some(c => c.textContent === '')) return;
+    const allFilled = !Array.from(emptyCells).some(c => c.textContent === '');
+    if (!allFilled) return;
+    
+    // Check all horizontal equations (rows 0, 2, 4...)
     const size = state.lastGeneratedGrid.length;
+    let allCorrect = true;
+    
     for (let r = 0; r < size; r += 2) {
         const line = [];
         for (let c = 0; c < size; c++) {
             const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
             line.push(el ? el.textContent : '');
         }
-        if (!evaluateLine(line)) { Haptics.warning(); return; }
+        if (!evaluateLine(line)) { allCorrect = false; break; }
     }
-    for (let c = 0; c < size; c += 2) {
-        const line = [];
-        for (let r = 0; r < size; r++) {
-            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-            line.push(el ? el.textContent : '');
+    
+    if (allCorrect) {
+        // Check all vertical equations (cols 0, 2, 4...)
+        for (let c = 0; c < size; c += 2) {
+            const line = [];
+            for (let r = 0; r < size; r++) {
+                const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+                line.push(el ? el.textContent : '');
+            }
+            if (!evaluateLine(line)) { allCorrect = false; break; }
         }
-        if (!evaluateLine(line)) { Haptics.warning(); return; }
     }
+    
+    if (!allCorrect) return;
 
     Haptics.success();
     clearInterval(state.timerInterval);

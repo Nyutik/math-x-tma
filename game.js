@@ -70,8 +70,9 @@ const tg = window.Telegram?.WebApp || {
 const API_URL = window.location.origin;
 
 const ServerAPI = {
-    enabled: true, // Enable backend for Telegram Mini App
-    getTId() { return tg.initDataUnsafe?.user?.id || 12345; },
+    get isTelegram() { return typeof tg !== 'undefined' && tg.initDataUnsafe?.user; },
+    get enabled() { return this.isTelegram; }, // Only use backend in Telegram
+    getTId() { return this.isTelegram ? tg.initDataUnsafe.user.id : 12345; },
     async call(path, method = 'GET', body = null) {
         if (!this.enabled) return null;
         try {

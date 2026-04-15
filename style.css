@@ -75,10 +75,8 @@ body {
         justify-content: center; 
     }
     #app { 
-        max-width: 500px; 
+        max-width: 420px; 
         width: 100%;
-        border-left: 1px solid var(--glass-border);
-        border-right: 1px solid var(--glass-border);
     }
 }
 

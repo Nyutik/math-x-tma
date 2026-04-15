@@ -276,7 +276,16 @@ function initApp() {
     safeSetClick('next-level-btn', nextLevel);
     safeSetClick('win-to-menu-btn', () => { closeModal(); switchScreen('menu'); });
     safeSetClick('back-to-menu', handleBackAction);
-    safeSetClick('pause-to-menu-btn', handleBackAction);
+    safeSetClick('pause-to-menu-btn', () => { 
+        closeModal(); 
+        clearInterval(state.timerInterval);
+        clearInterval(state.botInterval);
+        switchScreen('menu');
+        state.isGameActive = false;
+        state.activeSession = null;
+        localStorage.removeItem('mx_active_session');
+        updateUI();
+    });
     safeSetClick('pause-game-btn', pauseGame);
     safeSetClick('resume-game-btn', resumeGame);
     safeSetClick('hint-btn', useHint);
@@ -549,14 +558,29 @@ function evaluateLine(line) {
 }
 
 function checkWin() {
-    const emptyCells = document.querySelectorAll('.cell.empty');
-    const allFilled = !Array.from(emptyCells).some(c => c.textContent === '');
-    if (!allFilled) return;
-    
-    // Check all horizontal equations (rows 0, 2, 4...)
     const size = state.lastGeneratedGrid.length;
+    
+    // Check all rows (0, 2, 4...) for empty cells
+    for (let r = 0; r < size; r += 2) {
+        for (let c = 0; c < size; c++) {
+            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+            // Skip operators (=)
+            if (el && el.textContent === '') return;
+        }
+    }
+    
+    // Check all columns (0, 2, 4...) for empty cells
+    for (let c = 0; c < size; c += 2) {
+        for (let r = 0; r < size; r++) {
+            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+            if (el && el.textContent === '') return;
+        }
+    }
+    
+    // Now check all equations
     let allCorrect = true;
     
+    // Check rows
     for (let r = 0; r < size; r += 2) {
         const line = [];
         for (let c = 0; c < size; c++) {
@@ -567,7 +591,7 @@ function checkWin() {
     }
     
     if (allCorrect) {
-        // Check all vertical equations (cols 0, 2, 4...)
+        // Check columns
         for (let c = 0; c < size; c += 2) {
             const line = [];
             for (let r = 0; r < size; r++) {

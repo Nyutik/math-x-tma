@@ -13,13 +13,19 @@ window.AudioManager = {
             this.bgMusic.loop = true;
             this.bgMusic.volume = 0.3;
             
-            const tryPlay = () => {
+            // Try to resume AudioContext on first interaction
+            const tryPlay = async () => {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    await this.ctx.resume();
+                }
                 if (!this.isMusicOff && this.bgMusic) {
                     this.bgMusic.play().catch(() => {});
                 }
                 document.removeEventListener('click', tryPlay);
+                document.removeEventListener('touchstart', tryPlay);
             };
             document.addEventListener('click', tryPlay);
+            document.addEventListener('touchstart', tryPlay);
             
         } catch(e) { }
     },

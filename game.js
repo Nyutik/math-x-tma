@@ -228,8 +228,6 @@ function saveData() {
 }
 
 window.onload = async () => {
-    tg.ready(); tg.expand();
-    try { if (tg.requestFullscreen) tg.requestFullscreen(); } catch(e) {}
     if (typeof AudioManager !== 'undefined') AudioManager.init();
     
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });

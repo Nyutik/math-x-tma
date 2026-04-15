@@ -285,6 +285,7 @@ function initApp() {
         state.activeSession = null;
         localStorage.removeItem('mx_active_session');
         updateUI();
+        if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
     });
     safeSetClick('pause-game-btn', pauseGame);
     safeSetClick('resume-game-btn', resumeGame);
@@ -309,7 +310,11 @@ function initApp() {
         if (typeof AudioManager !== 'undefined') { AudioManager.toggleSound(); updateUI(); }
     });
 
-    document.querySelectorAll('.btn-close-modal').forEach(b => b.onclick = () => { Haptics.light(); closeModal(); });
+    document.querySelectorAll('.btn-close-modal').forEach(b => {
+        if (!b.id || (b.id !== 'pause-to-menu-btn' && b.id !== 'win-to-menu-btn')) {
+            b.onclick = () => { Haptics.light(); closeModal(); };
+        }
+    });
 
     document.querySelectorAll('.bot-btn').forEach(btn => {
         btn.onclick = () => {
@@ -360,6 +365,7 @@ function handleBackAction() {
     state.activeSession = null;
     localStorage.removeItem('mx_active_session');
     updateUI();
+    if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
 }
 
 function nextLevel() {
@@ -497,7 +503,8 @@ function renderGrid(grid) {
                 cell.textContent = val;
                 cell.classList.add('fixed');
             } else {
-                cell.classList.add(r % 2 === 0 && c % 2 === 0 ? 'empty' : 'void');
+                const isAnswer = state.currentAnswers && state.currentAnswers[`${r}-${c}`] !== undefined;
+                cell.classList.add(isAnswer ? 'empty' : 'void');
                 if (val && val !== '') cell.textContent = val;
             }
             container.appendChild(cell);
@@ -560,28 +567,17 @@ function evaluateLine(line) {
 function checkWin() {
     const size = state.lastGeneratedGrid.length;
     
-    // Check all rows (0, 2, 4...) for empty cells
-    for (let r = 0; r < size; r += 2) {
-        for (let c = 0; c < size; c++) {
-            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-            // Skip operators (=)
-            if (el && el.textContent === '') return;
-        }
-    }
+    // Bulletproof check: ONLY check the actual input cells that the user needs to fill
+    const emptyCells = Array.from(document.querySelectorAll('.cell.empty'));
+    const isBoardFull = emptyCells.every(c => c.textContent !== '');
     
-    // Check all columns (0, 2, 4...) for empty cells
-    for (let c = 0; c < size; c += 2) {
-        for (let r = 0; r < size; r++) {
-            const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
-            if (el && el.textContent === '') return;
-        }
-    }
+    if (!isBoardFull) return;
     
     // Now check all equations
     let allCorrect = true;
     
     // Check rows
-    for (let r = 0; r < size; r += 2) {
+    for (let r = 0; r < size - 1; r += 2) {
         const line = [];
         for (let c = 0; c < size; c++) {
             const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
@@ -589,10 +585,10 @@ function checkWin() {
         }
         if (!evaluateLine(line)) { allCorrect = false; break; }
     }
-    
+
     if (allCorrect) {
         // Check columns
-        for (let c = 0; c < size; c += 2) {
+        for (let c = 0; c < size - 1; c += 2) {
             const line = [];
             for (let r = 0; r < size; r++) {
                 const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
@@ -600,9 +596,11 @@ function checkWin() {
             }
             if (!evaluateLine(line)) { allCorrect = false; break; }
         }
+    }    
+    if (!allCorrect) {
+        Haptics.error();
+        return;
     }
-    
-    if (!allCorrect) return;
 
     Haptics.success();
     clearInterval(state.timerInterval);
@@ -622,6 +620,9 @@ function checkWin() {
     state.coins += reward;
     state.xp += 20;
     state.level = Math.floor(state.xp / 100) + 1;
+    
+    const winRewardText = document.getElementById('win-reward-text');
+    if (winRewardText) winRewardText.textContent = `+${reward} 🪙`;
     
     saveData();
     ServerAPI.saveScore(state.diff, state.secondsElapsed, reward);

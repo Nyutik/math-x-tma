@@ -770,7 +770,7 @@ function resumeGame() {
 }
 
 function saveCurrentToSession(force = false) {
-    if (!state.lastGeneratedGrid || state.isBattle) return; // Don't save for battle
+    if (!state.lastGeneratedGrid || state.isBattle) return;
     const emptyCells = Array.from(document.querySelectorAll('.cell.empty, .cell.hinted'));
     const hasInput = emptyCells.some(c => c.textContent !== '');
     if (!hasInput && !force) {
@@ -788,7 +788,8 @@ function saveCurrentToSession(force = false) {
         }
         grid.push(row);
     }
-    state.activeSession = { diff: state.diff, num: state.currentLevelNum, grid, answers: state.currentAnswers, fixedCells: state.fixedCells, seconds: state.secondsElapsed, lastGeneratedGrid: state.lastGeneratedGrid };
+    // Save time only if there was user input
+    state.activeSession = { diff: state.diff, num: state.currentLevelNum, grid, answers: state.currentAnswers, fixedCells: state.fixedCells, seconds: hasInput ? state.secondsElapsed : 0, lastGeneratedGrid: state.lastGeneratedGrid };
     saveData();
 }
 
@@ -997,5 +998,14 @@ function renderNumberPad() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden && state.isGameActive && !state.isBattle) pauseGame();
+    if (document.hidden && state.isGameActive && !state.isBattle) {
+        pauseGame();
+        saveCurrentToSession(true);
+    }
+});
+
+window.addEventListener('beforeunload', () => {
+    if (state.isGameActive && !state.isBattle) {
+        saveCurrentToSession(true);
+    }
 });

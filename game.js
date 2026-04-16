@@ -35,6 +35,7 @@ let state = {
     unlockedMedium: parseInt(localStorage.getItem('mx_unlocked_medium') || '1'),
     unlockedHard: parseInt(localStorage.getItem('mx_unlocked_hard') || '1'),
     unlockedExpert: parseInt(localStorage.getItem('mx_unlocked_expert') || '1'),
+    streak: parseInt(localStorage.getItem('mx_streak') || '0'),
     inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram","starry","cyberpunk"]}'),
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
@@ -307,14 +308,29 @@ function initApp() {
     safeSetClick('freeze-btn', useFreeze);
     safeSetClick('crystal-btn', useCrystal);
 
-    safeSetClick('claim-btn', () => {
-        const now = new Date();
-        const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+    safeSetClick('claim-btn', function() {
+        const today = getLocalDateStr();
         if (state.lastBonus === today) return;
-        state.coins += 50;
+        
+        // Calculate streak bonus
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+        
+        const currentStreak = (state.lastBonus === yesterdayStr) ? state.streak + 1 : 1;
+        const bonusAmount = 50 * currentStreak;
+        
+        state.coins += bonusAmount;
+        state.streak = currentStreak;
         state.lastBonus = today;
+        localStorage.setItem('mx_streak', currentStreak);
+        
         Haptics.success();
         saveData(); updateUI(); closeModal();
+        
+        if (currentStreak > 1) {
+            showToast((state.lang === 'ru' ? '🔥 ' : '🔥 ') + currentStreak + (state.lang === 'ru' ? ' день подряд! Бонус x' : ' days in a row! Bonus x') + currentStreak);
+        }
     });
 
     safeSetClick('toggle-music-btn', () => { 
@@ -813,9 +829,68 @@ async function showModal(id) {
     if (id === 'missions') renderMissions();
     if (id === 'gallery') renderGallery();
     if (id === 'leaderboard') renderLeaderboard();
+    if (id === 'bonus') updateBonusModal();
 }
 
 function closeModal() { document.getElementById('modal-container').classList.add('hidden'); }
+
+function updateBonusModal() {
+    const streakDisplay = document.getElementById('streak-display');
+    const rewardAmount = document.getElementById('reward-amount');
+    const claimBtn = document.getElementById('claim-btn');
+    
+    if (streakDisplay && rewardAmount && claimBtn) {
+        const today = getLocalDateStr();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().slice(0, 10);
+        
+        // Calculate current streak
+        let currentStreak = 0;
+        if (state.lastBonus === today) {
+            currentStreak = state.streak;
+        } else if (state.lastBonus === yesterdayStr) {
+            currentStreak = state.streak;
+        } else {
+            currentStreak = 0;
+        }
+        
+        // Check if already claimed today
+        if (state.lastBonus === today) {
+            streakDisplay.innerHTML = (state.lang === 'ru' ? '✓ Получено сегодня!' : '✓ Claimed today!') + ' 🔥 ' + state.streak;
+            rewardAmount.textContent = '0';
+            claimBtn.classList.add('disabled');
+            claimBtn.innerHTML = state.lang === 'ru' ? 'ПОЛУЧЕНО' : 'CLAIMED';
+        } else {
+            const bonus = 50 * (currentStreak + 1);
+            streakDisplay.innerHTML = '🔥 ' + (currentStreak + 1) + (state.lang === 'ru' ? ' дней подряд!' : ' days in a row!');
+            rewardAmount.textContent = bonus;
+            claimBtn.classList.remove('disabled');
+            claimBtn.innerHTML = '<span data-i18n="claim">' + (state.lang === 'ru' ? 'ПОЛУЧИТЬ' : 'CLAIM') + '</span> <span id="reward-amount">' + bonus + '</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>';
+        }
+        
+        if (window.lucide) lucide.createIcons();
+    }
+    
+    // Render streak track
+    const track = document.getElementById('streak-track');
+    if (track) {
+        const displayStreak = (state.lastBonus === today) ? state.streak : 
+            (state.lastBonus === yesterdayStr ? state.streak : 0);
+        
+        let html = '';
+        for (let i = 1; i <= 7; i++) {
+            const isActive = i <= displayStreak;
+            const isToday = i === displayStreak + 1;
+            html += '<div style="flex:1; height:40px; border-radius:10px; background:' + 
+                (isActive ? 'var(--gold)' : (isToday ? 'var(--accent)' : 'var(--card-onyx)')) + 
+                '; border:2px solid ' + (isActive || isToday ? 'var(--gold)' : 'var(--glass-border)') + 
+                '; display:flex; align-items:center; justify-content:center; color:' + 
+                (isActive ? '#000' : 'var(--text-dim)') + '; font-weight:bold;">' + i + '</div>';
+        }
+        track.innerHTML = html;
+    }
+}
 
 function useHint() {
     if (state.inventory.hints <= 0 || !state.isGameActive) { Haptics.error(); return; }

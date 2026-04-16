@@ -929,12 +929,13 @@ function useHint() {
     for (let c of cells) {
         const r = c.dataset.r, col = c.dataset.c;
         const ans = state.currentAnswers[`${r}-${col}`];
-        if (c.textContent !== ans) {
+        if (c.textContent !== ans && ans) {
             Haptics.success();
             c.textContent = ans;
+            c.classList.remove('empty');
+            c.classList.add('fixed', 'hinted');
             state.inventory.hints--;
-            state.fixedCells[`${r}-${col}`] = 'hinted'; // Mark as hinted
-            renderGrid(state.lastGeneratedGrid); // Refresh grid to apply hinted style and remove 'empty' class
+            state.fixedCells[`${r}-${col}`] = 'hinted';
             saveCurrentToSession();
             updateUI();
             updateProgressBar();
@@ -961,14 +962,15 @@ function useCrystal() {
     for (let c of cells) {
         const r = c.dataset.r, col = c.dataset.c;
         const ans = state.currentAnswers[`${r}-${col}`];
-        if (c.textContent !== ans) {
+        if (c.textContent !== ans && ans) {
             c.textContent = ans;
-            state.fixedCells[`${r}-${col}`] = 'hinted'; // Mark as hinted
+            c.classList.remove('empty');
+            c.classList.add('fixed', 'hinted');
+            state.fixedCells[`${r}-${col}`] = 'hinted';
             count++;
             if (count >= 3) break;
         }
     }
-    renderGrid(state.lastGeneratedGrid); // Refresh grid
     saveCurrentToSession();
     updateUI();
     updateProgressBar();

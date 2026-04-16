@@ -41,6 +41,8 @@ let state = {
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
     lastMissionsReset: localStorage.getItem('mx_last_missions') || '',
+    todaySolved: parseInt(localStorage.getItem('mx_today_solved') || '0'),
+    lastSolvedDate: localStorage.getItem('mx_last_solved_date') || '',
     stats: (() => {
         const saved = JSON.parse(localStorage.getItem('mx_stats') || 'null');
         if (saved && saved.totalSolved > 0) return saved;
@@ -259,6 +261,8 @@ function saveData() {
     localStorage.setItem('mx_daily_completed', state.dailyCompleted ? 'true' : 'false');
     localStorage.setItem('mx_last_bonus', state.lastBonus);
     localStorage.setItem('mx_streak', state.streak);
+    localStorage.setItem('mx_today_solved', state.todaySolved);
+    localStorage.setItem('mx_last_solved_date', state.lastSolvedDate);
     localStorage.setItem('mx_stats', JSON.stringify(state.stats));
     localStorage.setItem('mx_transactions', JSON.stringify(state.transactions));
     localStorage.setItem('mx_active_session', JSON.stringify(state.activeSession));
@@ -752,6 +756,17 @@ function checkWin() {
     clearInterval(state.timerInterval);
     clearInterval(state.botInterval);
     state.stats.totalSolved++;
+    
+    // Track today's solved count
+    const today = getLocalDateStr();
+    if (state.lastSolvedDate !== today) {
+        state.todaySolved = 0;
+        state.lastSolvedDate = today;
+        localStorage.setItem('mx_last_solved_date', today);
+    }
+    state.todaySolved++;
+    localStorage.setItem('mx_today_solved', state.todaySolved);
+    
     state.activeSession = null;
     localStorage.removeItem('mx_active_session');
     if (state.isDaily) {
@@ -1138,8 +1153,8 @@ async function renderMissions() {
     
     const m = await ServerAPI.getMissions();
     const missions = m && m.length > 0 ? m : [
-        { id: 'solve_3', title: missionTitles['solve_3'], goal: 3, progress: Math.min(state.stats.totalSolved, 3), reward: 50 },
-        { id: 'solve_10', title: missionTitles['solve_10'], goal: 10, progress: Math.min(state.stats.totalSolved, 10), reward: 200 }
+        { id: 'solve_3', title: missionTitles['solve_3'], goal: 3, progress: Math.min(state.todaySolved, 3), reward: 50 },
+        { id: 'solve_10', title: missionTitles['solve_10'], goal: 10, progress: Math.min(state.todaySolved, 10), reward: 200 }
     ];
     
     // Check if all done
@@ -1172,8 +1187,13 @@ window.claimMissionReward = async function(id, reward) {
     const today = getLocalDateStr();
     if (claimedMissions[id] === today) return;
     
+    // Check if goal is met (using today's solved count)
+    const goals = { 'solve_3': 3, 'solve_10': 10 };
+    if (!goals[id] || state.todaySolved < goals[id]) return; // Can't claim if not done
+    
     // Fallback: add coins locally
     state.coins += reward;
+    addTransaction('earned', 'mission', reward);
     claimedMissions[id] = today;
     localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
     saveData(); updateUI(); renderMissions();
@@ -1194,7 +1214,7 @@ function checkAndClaimMissions() {
     for (let i = 0; i < localMissions.length; i++) {
         const m = localMissions[i];
         if (claimedMissions[m.id] === today) continue;
-        if (state.stats.totalSolved >= m.goal) {
+        if (state.todaySolved >= m.goal) {
             state.coins += m.reward;
             addTransaction('earned', 'mission', m.reward);
             totalReward += m.reward;

@@ -681,13 +681,12 @@ function checkWin() {
         for (let c = 0; c < size - 1; c += 2) {
             const line = [];
             for (let r = 0; r < size; r++) {
-                const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]');
+                const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
                 line.push(el ? el.textContent : '');
             }
             if (!evaluateLine(line)) { allCorrect = false; break; }
         }
-    }
-
+    }    
     if (!allCorrect) {
         Haptics.error();
         return;
@@ -715,8 +714,8 @@ function checkWin() {
     state.xp += 20;
     state.level = Math.floor(state.xp / 100) + 1;
     
-    // Auto-claim available missions
-    setTimeout(() => checkAndClaimMissions(), 1500);
+    // Auto-claim available missions after 1.5s
+    setTimeout(function() { checkAndClaimMissions(); }, 1500);
     
     const winRewardText = document.getElementById('win-reward-text');
     if (winRewardText) {
@@ -904,16 +903,34 @@ async function renderMissions() {
         localStorage.setItem('mx_last_missions', today);
     }
     
-    // Load claimed missions from localStorage
+    // Get mission titles based on language
+    const missionTitles = state.lang === 'ru' ? {
+        'solve_3': 'Реши 3 уровня',
+        'solve_10': 'Математик: 10 уровней'
+    } : {
+        'solve_3': 'Solve 3 levels',
+        'solve_10': 'Mathematician: 10 levels'
+    };
+    
+    // Load claimed missions
     const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
-    const isClaimed = (id) => claimedMissions[id] === today;
+    const isClaimed = function(id) { return claimedMissions[id] === today; };
     
     const m = await ServerAPI.getMissions();
     const missions = m && m.length > 0 ? m : [
-        { id: 'solve_3', title: 'Реши 3 уровня', goal: 3, progress: Math.min(state.stats.totalSolved, 3), reward: 50 },
-        { id: 'solve_10', title: 'Математик: 10 уровней', goal: 10, progress: Math.min(state.stats.totalSolved, 10), reward: 200 }
+        { id: 'solve_3', title: missionTitles['solve_3'], goal: 3, progress: Math.min(state.stats.totalSolved, 3), reward: 50 },
+        { id: 'solve_10', title: missionTitles['solve_10'], goal: 10, progress: Math.min(state.stats.totalSolved, 10), reward: 200 }
     ];
-    list.innerHTML = missions.map(x => {
+    
+    // Check if all done
+    const allDone = missions.every(x => x.progress >= x.goal);
+    const allClaimed = missions.every(x => isClaimed(x.id));
+    const timerHTML = (allDone && allClaimed) ? 
+        `<div style="text-align:center; padding:15px; color:var(--text-dim); font-size:0.85rem;">
+            ${state.lang === 'ru' ? 'Новые задания через:' : 'New missions in:'} ${getTimeToMidnight()}
+        </div>` : '';
+    
+    list.innerHTML = timerHTML + missions.map(x => {
         const done = x.progress >= x.goal;
         const claimed = isClaimed(x.id);
         return `
@@ -930,20 +947,32 @@ async function renderMissions() {
     if (window.lucide) lucide.createIcons();
 }
 
+window.claimMissionReward = async function(id, reward) {
+    const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
+    const today = getLocalDateStr();
+    if (claimedMissions[id] === today) return;
+    
+    // Fallback: add coins locally
+    state.coins += reward;
+    claimedMissions[id] = today;
+    localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
+    saveData(); updateUI(); renderMissions();
+};
+
 function checkAndClaimMissions() {
     const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
     const today = getLocalDateStr();
     let totalReward = 0;
     let claimed = false;
     
-    // Check local missions
     const localMissions = [
         { id: 'solve_3', goal: 3, reward: 50 },
         { id: 'solve_10', goal: 10, reward: 200 }
     ];
     
-    for (const m of localMissions) {
-        if (claimedMissions[m.id] === today) continue; // Already claimed
+    for (let i = 0; i < localMissions.length; i++) {
+        const m = localMissions[i];
+        if (claimedMissions[m.id] === today) continue;
         if (state.stats.totalSolved >= m.goal) {
             state.coins += m.reward;
             totalReward += m.reward;
@@ -955,9 +984,8 @@ function checkAndClaimMissions() {
     if (claimed) {
         localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
         saveData(); updateUI();
-        // Show toast notification
         if (totalReward > 0) {
-            showToast(`+${totalReward} 🪙 за задания!`);
+            showToast('+' + totalReward + ' ' + (state.lang === 'ru' ? '🪙 за задания!' : '🪙 from missions!'));
         }
     }
 }
@@ -967,23 +995,11 @@ function showToast(message) {
     toast.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--success-color); color:#000; padding:20px 40px; border-radius:20px; font-weight:bold; font-size:1.2rem; z-index:9999; box-shadow:0 0 30px var(--success-color); animation:fadeIn 0.3s;';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => {
+    setTimeout(function() {
         toast.style.animation = 'fadeIn 0.3s reverse';
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(function() { toast.remove(); }, 300);
     }, 2500);
 }
-
-window.claimMissionReward = async (id, reward) => {
-    const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
-    const today = getLocalDateStr();
-    if (claimedMissions[id] === today) return; // Already claimed today
-    
-    // Fallback: just add coins locally if server fails
-    state.coins += reward;
-    claimedMissions[id] = today;
-    localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
-    saveData(); updateUI(); renderMissions();
-};
 
 async function renderLeaderboard() {
     const list = document.getElementById('leader-list');

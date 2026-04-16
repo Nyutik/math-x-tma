@@ -374,7 +374,16 @@ function handleBackAction() {
     clearInterval(state.timerInterval);
     clearInterval(state.botInterval);
     state.isGameActive = false;
-    showModal('level');
+    state.activeSession = null;
+    localStorage.removeItem('mx_active_session');
+    
+    // Only go to level list for regular levels (not daily or battle)
+    if (!state.isDaily && !state.isBattle) {
+        showModal('level');
+    } else {
+        switchScreen('menu');
+    }
+    
     updateUI();
     if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
 }

@@ -373,10 +373,8 @@ function handleBackAction() {
     closeModal();
     clearInterval(state.timerInterval);
     clearInterval(state.botInterval);
-    switchScreen('menu');
     state.isGameActive = false;
-    state.activeSession = null;
-    localStorage.removeItem('mx_active_session');
+    showModal('level');
     updateUI();
     if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
 }

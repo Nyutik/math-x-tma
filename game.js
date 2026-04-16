@@ -170,7 +170,7 @@ function updateUI() {
             dailySubtitle.innerHTML = `<span style="color: #00ff88;">✓</span> ${getTimeToMidnight()}`;
         } else {
             dailyTitle.textContent = I18N[state.lang].daily_level;
-            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}`;
+            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:var(--text-dim);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
         }
         if (window.lucide) lucide.createIcons();
     }

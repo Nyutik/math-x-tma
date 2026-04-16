@@ -747,7 +747,26 @@ function checkWin() {
     ServerAPI.saveScore(state.diff, state.secondsElapsed, reward);
     
     showModal(state.isBattle ? 'battle-result' : 'win');
-    if (typeof confetti !== 'undefined') confetti({ particleCount: 150 });
+    
+    // Theme-specific confetti
+    if (typeof confetti !== 'undefined') {
+        const themeConfetti = {
+            'onyx': { particleCount: 150, colors: ['#00f2ff', '#0066ff', '#00ff88', '#ffd700'] },
+            'light': { particleCount: 150, colors: ['#0ea5e9', '#22c55e', '#f59e0b', '#8b5cf6'] },
+            'amethyst': { particleCount: 150, colors: ['#e0aaff', '#c084fc', '#a855f7', '#ffd700'] },
+            'paper': { particleCount: 100, colors: ['#d33682', '#859900', '#2aa198', '#cb4b16'] },
+            'telegram': { particleCount: 150, colors: ['#2481cc', '#00aaff', '#ffd700', '#00ff88'] },
+            'starry': { particleCount: 200, colors: ['#c0a0ff', '#ffd700', '#ff00ff', '#00ffaa', '#ffffff'] },
+            'cyberpunk': { particleCount: 200, colors: ['#ff00ff', '#00ffaa', '#ffff00', '#ff0000'] }
+        };
+        const confettiSettings = themeConfetti[state.theme] || themeConfetti['onyx'];
+        confetti({ 
+            particleCount: confettiSettings.particleCount,
+            colors: confettiSettings.colors,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
 }
 
 function startTimer() {

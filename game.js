@@ -118,11 +118,11 @@ const ServerAPI = {
 
 // Haptics Helper
 const Haptics = {
-    light: () => tg.HapticFeedback.impactOccurred('light'),
-    medium: () => tg.HapticFeedback.impactOccurred('medium'),
-    success: () => tg.HapticFeedback.notificationOccurred('success'),
-    error: () => tg.HapticFeedback.notificationOccurred('error'),
-    warning: () => tg.HapticFeedback.notificationOccurred('warning')
+    light: () => { try { tg.HapticFeedback?.impactOccurred('light'); } catch(e) {} },
+    medium: () => { try { tg.HapticFeedback?.impactOccurred('medium'); } catch(e) {} },
+    success: () => { try { tg.HapticFeedback?.notificationOccurred('success'); } catch(e) {} },
+    error: () => { try { tg.HapticFeedback?.notificationOccurred('error'); } catch(e) {} },
+    warning: () => { try { tg.HapticFeedback?.notificationOccurred('warning'); } catch(e) {} }
 };
 
 function applyLanguage() {
@@ -535,6 +535,8 @@ function startLevel(diff, num) {
             for (let c = 0; c < level.grid[r].length; c++) {
                 if (level.grid[r][c] === '' && state.activeSession.grid[r] && state.activeSession.grid[r][c]) {
                     level.grid[r][c] = state.activeSession.grid[r][c];
+                    // Mark as filled by user so it can't be changed
+                    level.fixedCells[`${r}-${c}`] = 'user-filled';
                 }
             }
         }
@@ -560,16 +562,19 @@ function renderGrid(grid) {
             const cell = document.createElement('div');
             cell.className = 'cell';
             cell.dataset.r = r; cell.dataset.c = c;
-            const isFixed = state.fixedCells[`${r}-${c}`];
-            const isHinted = state.fixedCells[`${r}-${c}`] === 'hinted';
+            const cellState = state.fixedCells[`${r}-${c}`];
+            const isHinted = cellState === 'hinted';
+            const isUserFilled = cellState === 'user-filled';
+            const isProtected = isHinted || isUserFilled || cellState === true;
             
             if (['+','-','*','/','='].includes(val)) {
                 cell.classList.add('operator');
                 cell.textContent = val;
-            } else if (isFixed) {
+            } else if (isProtected) {
                 cell.textContent = val;
                 cell.classList.add('fixed');
                 if (isHinted) cell.classList.add('hinted');
+                if (isUserFilled) cell.classList.add('hinted'); // Same style for user-filled
             } else {
                 const isAnswer = state.currentAnswers && state.currentAnswers[`${r}-${c}`] !== undefined;
                 cell.classList.add(isAnswer ? 'empty' : 'void');
@@ -787,7 +792,7 @@ function saveCurrentToSession(force = false) {
 }
 
 function selectCell(el) {
-    if (el.classList.contains('hinted') || el.classList.contains('fixed')) return; // Cannot select hinted/fixed
+    if (el.classList.contains('hinted') || el.classList.contains('fixed')) return;
     if (state.selected) state.selected.classList.remove('selected');
     state.selected = el; state.selected.classList.add('selected');
 }

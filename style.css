@@ -169,7 +169,7 @@ body {
 .cell.result { background: var(--glass); color: var(--accent); border-color: var(--glass-border); }
 .cell.correct { background: #00ff88 !important; color: #000 !important; border: none; }
 .cell.wrong { background: #ff3366 !important; color: #fff !important; animation: shake 0.3s; }
-.cell.fixed { background: rgba(255,255,255,0.08); color: var(--text); }
+.cell.fixed, .cell.hinted { background: rgba(168, 85, 247, 0.25); color: #e9d5ff; border: 1px solid rgba(168, 85, 247, 0.5); font-weight: 900; box-shadow: 0 0 8px rgba(168, 85, 247, 0.3); }
 
 @keyframes popInCell {
     0% { transform: scale(0.5); opacity: 0; }

@@ -47,6 +47,8 @@ let state = {
         const currentXp = parseInt(localStorage.getItem('mx_xp') || '0');
         return { totalSolved: Math.floor(currentXp / 20) };
     })(),
+    // Detailed transaction history
+    transactions: JSON.parse(localStorage.getItem('mx_transactions') || '{"earned":{},"spent":{}}'),
     activeSession: JSON.parse(localStorage.getItem('mx_active_session') || 'null'),
     currentDiffTab: 'easy',
     isGameActive: false,
@@ -256,9 +258,20 @@ function saveData() {
     localStorage.setItem('mx_last_daily', state.lastDaily);
     localStorage.setItem('mx_daily_completed', state.dailyCompleted ? 'true' : 'false');
     localStorage.setItem('mx_last_bonus', state.lastBonus);
+    localStorage.setItem('mx_streak', state.streak);
     localStorage.setItem('mx_stats', JSON.stringify(state.stats));
+    localStorage.setItem('mx_transactions', JSON.stringify(state.transactions));
     localStorage.setItem('mx_active_session', JSON.stringify(state.activeSession));
     ServerAPI.sync();
+}
+
+// Transaction tracking helper
+function addTransaction(type, category, amount) {
+    const today = getLocalDateStr();
+    if (!state.transactions[type]) state.transactions[type] = {};
+    if (!state.transactions[type][category]) state.transactions[type][category] = {};
+    if (!state.transactions[type][category][today]) state.transactions[type][category][today] = 0;
+    state.transactions[type][category][today] += amount;
 }
 
 window.onload = async () => {
@@ -339,6 +352,7 @@ function initApp() {
         const bonusAmount = 50 * currentStreak;
         
         state.coins += bonusAmount;
+        addTransaction('earned', 'daily_bonus', bonusAmount);
         state.streak = currentStreak;
         state.lastBonus = today;
         localStorage.setItem('mx_streak', currentStreak);
@@ -381,6 +395,7 @@ function initApp() {
             const stake = parseInt(btn.dataset.stake);
             if (state.coins < stake) { Haptics.error(); return alert('Недостаточно монет!'); }
             state.coins -= stake;
+            addTransaction('spent', 'battle', stake);
             state.battleStake = stake;
             state.battleBotDiff = btn.dataset.diff;
             startLevel(btn.dataset.diff === 'hard' ? 'hard' : (btn.dataset.diff === 'easy' ? 'easy' : 'medium'), 'BATTLE');
@@ -484,6 +499,7 @@ function initShop() {
             if (!confirm(state.lang === 'ru' ? `Купить за ${price}?` : `Buy for ${price}?`)) return;
 
             state.coins -= price;
+            addTransaction('spent', id, price);
             if (id.startsWith('hint')) state.inventory.hints += (id === 'hint_5' ? 5 : 1);
             else if (id === 'freeze') state.inventory.freezes++;
             else if (id.startsWith('crystal')) state.inventory.crystals += (id === 'crystal_3' ? 3 : 1);
@@ -753,6 +769,9 @@ function checkWin() {
     
     const reward = (state.isDaily ? 200 : (state.isBattle ? state.battleStake * 2 : (state.diff === 'hard' ? 50 : 30)));
     state.coins += reward;
+    if (state.isDaily) addTransaction('earned', 'daily', reward);
+    else if (state.isBattle) addTransaction('earned', 'battle', reward);
+    else addTransaction('earned', 'level', reward);
     state.xp += 20;
     state.level = Math.floor(state.xp / 100) + 1;
     
@@ -1012,6 +1031,85 @@ async function renderStats() {
     document.getElementById('stats-solved').textContent = totalSolved;
     document.getElementById('stats-crystals').textContent = state.inventory.crystals;
     document.getElementById('stats-hints').textContent = state.inventory.hints;
+    
+    // Show transaction stats if available
+    const transContainer = document.getElementById('stats-transactions');
+    if (transContainer && state.transactions) {
+        const earned = state.transactions.earned || {};
+        const spent = state.transactions.spent || {};
+        
+        let totalEarned = 0;
+        let totalSpent = 0;
+        
+        // Sum all categories
+        for (let cat in earned) {
+            for (let day in earned[cat]) {
+                totalEarned += earned[cat][day];
+            }
+        }
+        for (let cat in spent) {
+            for (let day in spent[cat]) {
+                totalSpent += spent[cat][day];
+            }
+        }
+        
+        const categoryLabels = state.lang === 'ru' ? {
+            'level': 'За уровни',
+            'daily': 'За вызов',
+            'battle': 'За битву',
+            'mission': 'За задания',
+            'daily_bonus': 'Бонус дня',
+            'hint_5': 'Подсказки (5)',
+            'hint': 'Подсказка',
+            'crystal_3': 'Кристаллы (3)',
+            'crystal': 'Кристалл',
+            'freeze': 'Заморозка',
+            'battle': 'Битва',
+            'theme_amethyst': 'Тема: Аметист',
+            'theme_starry': 'Тема: Звёзды',
+            'theme_cyberpunk': 'Тема: Киберпанк'
+        } : {
+            'level': 'For levels',
+            'daily': 'For daily',
+            'battle': 'For battle',
+            'mission': 'For missions',
+            'daily_bonus': 'Daily bonus',
+            'hint_5': 'Hints (5)',
+            'hint': 'Hint',
+            'crystal_3': 'Crystals (3)',
+            'crystal': 'Crystal',
+            'freeze': 'Freeze',
+            'battle': 'Battle'
+        };
+        
+        // Build breakdown list
+        let earnedBreakdown = '';
+        for (let cat in earned) {
+            let catTotal = 0;
+            for (let day in earned[cat]) catTotal += earned[cat][day];
+            if (catTotal > 0) earnedBreakdown += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin:4px 0; color:var(--text-dim);"><span>${categoryLabels[cat] || cat}</span><span style="color:var(--success-color);">+${catTotal}</span></div>`;
+        }
+        
+        let spentBreakdown = '';
+        for (let cat in spent) {
+            let catTotal = 0;
+            for (let day in spent[cat]) catTotal += spent[cat][day];
+            if (catTotal > 0) spentBreakdown += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin:4px 0; color:var(--text-dim);"><span>${categoryLabels[cat] || cat}</span><span style="color:#ff6b6b;">-${catTotal}</span></div>`;
+        }
+        
+        transContainer.innerHTML = `
+            <div style="margin-top:15px; padding:15px; background:var(--card-onyx); border-radius:15px;">
+                <h4 style="margin:0 0 10px 0; color:var(--gold);">${state.lang === 'ru' ? 'Баланс' : 'Balance'}</h4>
+                <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:bold; margin-bottom:15px;">
+                    <span style="color:var(--success-color);">+${totalEarned}</span>
+                    <span style="color:#ff6b6b;">-${totalSpent}</span>
+                    <span style="color:var(--accent);">= ${state.coins}</span>
+                </div>
+                ${earnedBreakdown ? `<div style="margin-bottom:10px;"><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? 'Получено:' : 'Earned:'}</span>${earnedBreakdown}</div>` : ''}
+                ${spentBreakdown ? `<div><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? 'Потрачено:' : 'Spent:'}</span>${spentBreakdown}</div>` : ''}
+            </div>
+        `;
+    }
 }
 
 async function renderMissions() {
@@ -1098,6 +1196,7 @@ function checkAndClaimMissions() {
         if (claimedMissions[m.id] === today) continue;
         if (state.stats.totalSolved >= m.goal) {
             state.coins += m.reward;
+            addTransaction('earned', 'mission', m.reward);
             totalReward += m.reward;
             missionNames.push(m.title);
             claimedMissions[m.id] = today;

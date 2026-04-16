@@ -38,6 +38,7 @@ let state = {
     inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram","starry","cyberpunk"]}'),
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
+    lastMissionsReset: localStorage.getItem('mx_last_missions') || '',
     stats: (() => {
         const saved = JSON.parse(localStorage.getItem('mx_stats') || 'null');
         if (saved && saved.totalSolved > 0) return saved;
@@ -680,12 +681,13 @@ function checkWin() {
         for (let c = 0; c < size - 1; c += 2) {
             const line = [];
             for (let r = 0; r < size; r++) {
-                const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+                const el = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]');
                 line.push(el ? el.textContent : '');
             }
             if (!evaluateLine(line)) { allCorrect = false; break; }
         }
-    }    
+    }
+
     if (!allCorrect) {
         Haptics.error();
         return;
@@ -712,6 +714,9 @@ function checkWin() {
     state.coins += reward;
     state.xp += 20;
     state.level = Math.floor(state.xp / 100) + 1;
+    
+    // Auto-claim available missions
+    setTimeout(() => checkAndClaimMissions(), 1500);
     
     const winRewardText = document.getElementById('win-reward-text');
     if (winRewardText) {
@@ -891,30 +896,93 @@ async function renderStats() {
 async function renderMissions() {
     const list = document.getElementById('missions-list');
     if (!list) return;
+    
+    // Reset missions at midnight
+    const today = getLocalDateStr();
+    if (state.lastMissionsReset !== today) {
+        state.lastMissionsReset = today;
+        localStorage.setItem('mx_last_missions', today);
+    }
+    
+    // Load claimed missions from localStorage
+    const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
+    const isClaimed = (id) => claimedMissions[id] === today;
+    
     const m = await ServerAPI.getMissions();
     const missions = m && m.length > 0 ? m : [
         { id: 'solve_3', title: 'Реши 3 уровня', goal: 3, progress: Math.min(state.stats.totalSolved, 3), reward: 50 },
         { id: 'solve_10', title: 'Математик: 10 уровней', goal: 10, progress: Math.min(state.stats.totalSolved, 10), reward: 200 }
     ];
-    list.innerHTML = missions.map(x => `
-        <div style="background:var(--card-onyx); padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border: 1px solid var(--glass-border);">
+    list.innerHTML = missions.map(x => {
+        const done = x.progress >= x.goal;
+        const claimed = isClaimed(x.id);
+        return `
+        <div style="background:var(--card-onyx); padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border: 1px solid ${claimed ? 'var(--success-color)' : 'var(--glass-border)'};">
             <div style="display:flex; flex-direction:column;">
                 <span style="font-weight:bold;">${x.title}</span>
                 <span style="font-size:0.8rem; color:var(--text-dim);">${x.progress}/${x.goal}</span>
             </div>
-            <button class="buy-btn ${x.progress < x.goal ? 'disabled' : ''}" onclick="window.claimMissionReward('${x.id}', ${x.reward})" style="padding: 8px 12px; font-size: 0.8rem;">${x.reward} <i data-lucide="coins" style="width:12px; height:12px;"></i></button>
+            <button class="buy-btn ${(!done || claimed) ? 'disabled' : ''}" onclick="window.claimMissionReward('${x.id}', ${x.reward})" style="padding: 8px 12px; font-size: 0.8rem;">
+                ${claimed ? '✓' : x.reward + ' '}<i data-lucide="${claimed ? 'check' : 'coins'}" style="width:12px; height:12px;"></i>
+            </button>
         </div>
-    `).join('');
+    `}).join('');
     if (window.lucide) lucide.createIcons();
 }
 
-window.claimMissionReward = async (id, reward) => {
-    const res = await ServerAPI.claimMission(id);
-    if (res?.status === 'reward_claimed') {
-        Haptics.success();
-        state.coins += reward;
-        saveData(); updateUI(); renderMissions();
+function checkAndClaimMissions() {
+    const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
+    const today = getLocalDateStr();
+    let totalReward = 0;
+    let claimed = false;
+    
+    // Check local missions
+    const localMissions = [
+        { id: 'solve_3', goal: 3, reward: 50 },
+        { id: 'solve_10', goal: 10, reward: 200 }
+    ];
+    
+    for (const m of localMissions) {
+        if (claimedMissions[m.id] === today) continue; // Already claimed
+        if (state.stats.totalSolved >= m.goal) {
+            state.coins += m.reward;
+            totalReward += m.reward;
+            claimedMissions[m.id] = today;
+            claimed = true;
+        }
     }
+    
+    if (claimed) {
+        localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
+        saveData(); updateUI();
+        // Show toast notification
+        if (totalReward > 0) {
+            showToast(`+${totalReward} 🪙 за задания!`);
+        }
+    }
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--success-color); color:#000; padding:20px 40px; border-radius:20px; font-weight:bold; font-size:1.2rem; z-index:9999; box-shadow:0 0 30px var(--success-color); animation:fadeIn 0.3s;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'fadeIn 0.3s reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+window.claimMissionReward = async (id, reward) => {
+    const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
+    const today = getLocalDateStr();
+    if (claimedMissions[id] === today) return; // Already claimed today
+    
+    // Fallback: just add coins locally if server fails
+    state.coins += reward;
+    claimedMissions[id] = today;
+    localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
+    saveData(); updateUI(); renderMissions();
 };
 
 async function renderLeaderboard() {

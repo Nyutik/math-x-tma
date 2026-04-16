@@ -177,6 +177,8 @@ body {
     padding: 0 24px; color: #000; box-shadow: 0 15px 35px rgba(0, 242, 255, 0.3);
     cursor: pointer;
 }
+.main-play-card .card-content { text-align: left; }
+.main-play-card .card-content h1 { text-align: left; }
 .main-play-card:active { transform: scale(0.98); }
 .main-play-card h1 { font-size: 2rem; font-weight: 900; margin: 0; }
 .main-play-card p { font-size: 0.9rem; font-weight: 700; margin: 0; opacity: 0.8; }

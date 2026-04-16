@@ -158,6 +158,21 @@ function updateUI() {
         else levelTitle.textContent = `${I18N[state.lang].level_label} ${state.currentLevelNum}`;
     }
 
+    // Update daily card
+    const dailyTitle = document.getElementById('daily-title');
+    const dailySubtitle = document.getElementById('daily-subtitle');
+    const today = getLocalDateStr();
+    if (dailyTitle && dailySubtitle) {
+        if (state.lastDaily === today) {
+            dailyTitle.textContent = state.lang === 'ru' ? 'ВЫЗОВ ВЫПОЛНЕН' : 'CHALLENGE DONE';
+            dailySubtitle.innerHTML = `<span style="color: #00ff88;">✓</span> ${getTimeToMidnight()}`;
+        } else {
+            dailyTitle.textContent = I18N[state.lang].daily_level;
+            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}`;
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
     const hintText = document.querySelector('#hint-btn span');
     if (hintText) hintText.textContent = `${I18N[state.lang].hint} (${state.inventory.hints})`;
 
@@ -446,12 +461,33 @@ function switchScreen(screen) {
     }
 }
 
+function getLocalDateStr() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function getTimeToMidnight() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setDate(midnight.getDate() + 1);
+    midnight.setHours(0, 0, 0, 0);
+    const diff = midnight - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}ч ${mins}м`;
+}
+
 function startLevel(diff, num) {
     state.isBattle = (num === 'BATTLE');
     state.isDaily = (num === 'Daily');
     if (state.isDaily) {
-        const today = new Date().toISOString().slice(0, 10);
-        if (state.lastDaily === today) return alert('Вызов уже выполнен!');
+        const today = getLocalDateStr();
+        if (state.lastDaily === today) {
+            // Already completed - allow replay but show completion message
+            state.isDailyCompleted = true;
+        } else {
+            state.isDailyCompleted = false;
+        }
     }
 
     let level;
@@ -462,7 +498,9 @@ function startLevel(diff, num) {
         state.lastGeneratedGrid = state.activeSession.lastGeneratedGrid;
         seconds = state.activeSession.seconds;
     } else {
-        level = state.isDaily ? window.LevelGenerator.generateDaily(new Date().toISOString().slice(0, 10)) : window.LevelGenerator.generateLevel(diff);
+        // Use num as seed for consistency if not daily
+        const seed = state.isDaily ? null : (typeof num === 'number' ? num : null);
+        level = state.isDaily ? window.LevelGenerator.generateDaily(getLocalDateStr()) : window.LevelGenerator.generateLevel(diff, seed);
         if (!level) return alert('Ошибка генерации!');
         state.lastGeneratedGrid = level.grid;
         seconds = 0;
@@ -476,6 +514,7 @@ function startLevel(diff, num) {
     state.isFrozen = false;
 
     renderGrid(level.grid);
+    saveCurrentToSession(true); // Force save session
     switchScreen('game');
     closeModal();
     updateUI();
@@ -495,12 +534,15 @@ function renderGrid(grid) {
             cell.className = 'cell';
             cell.dataset.r = r; cell.dataset.c = c;
             const isFixed = state.fixedCells[`${r}-${c}`];
+            const isHinted = state.fixedCells[`${r}-${c}`] === 'hinted';
+            
             if (['+','-','*','/','='].includes(val)) {
                 cell.classList.add('operator');
                 cell.textContent = val;
             } else if (isFixed) {
                 cell.textContent = val;
                 cell.classList.add('fixed');
+                if (isHinted) cell.classList.add('hinted');
             } else {
                 const isAnswer = state.currentAnswers && state.currentAnswers[`${r}-${c}`] !== undefined;
                 cell.classList.add(isAnswer ? 'empty' : 'void');
@@ -622,7 +664,10 @@ function checkWin() {
     state.stats.totalSolved++;
     state.activeSession = null;
     localStorage.removeItem('mx_active_session');
-    if (state.isDaily) state.lastDaily = new Date().toISOString().slice(0, 10);
+    if (state.isDaily) {
+        state.lastDaily = getLocalDateStr();
+        state.inventory.crystals++; // Reward crystal for Daily
+    }
     else if (!state.isBattle) {
         if (state.diff === 'easy' && state.currentLevelNum === state.unlocked) state.unlocked++;
         else if (state.diff === 'medium' && state.currentLevelNum === state.unlockedMedium) state.unlockedMedium++;
@@ -636,7 +681,13 @@ function checkWin() {
     state.level = Math.floor(state.xp / 100) + 1;
     
     const winRewardText = document.getElementById('win-reward-text');
-    if (winRewardText) winRewardText.textContent = `+${reward} 🪙`;
+    if (winRewardText) {
+        let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} 🪙</span>`;
+        if (state.isDaily) {
+            rewardText += ` <span style="color:#a855f7; font-size:1.2rem; text-shadow:0 0 10px #a855f7;">+1 💎</span>`;
+        }
+        winRewardText.innerHTML = rewardText;
+    }
     
     saveData();
     ServerAPI.saveScore(state.diff, state.secondsElapsed, reward);
@@ -685,11 +736,11 @@ function resumeGame() {
     if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
 }
 
-function saveCurrentToSession() {
+function saveCurrentToSession(force = false) {
     if (!state.lastGeneratedGrid || state.isBattle) return;
     const emptyCells = Array.from(document.querySelectorAll('.cell.empty'));
     const hasInput = emptyCells.some(c => c.textContent !== '');
-    if (!hasInput) {
+    if (!hasInput && !force) {
         state.activeSession = null;
         localStorage.removeItem('mx_active_session');
         return;
@@ -709,6 +760,7 @@ function saveCurrentToSession() {
 }
 
 function selectCell(el) {
+    if (el.classList.contains('hinted') || el.classList.contains('fixed')) return; // Cannot select hinted/fixed
     if (state.selected) state.selected.classList.remove('selected');
     state.selected = el; state.selected.classList.add('selected');
 }
@@ -731,11 +783,14 @@ function useHint() {
     if (state.inventory.hints <= 0 || !state.isGameActive) { Haptics.error(); return; }
     const cells = document.querySelectorAll('.cell.empty');
     for (let c of cells) {
-        const ans = state.currentAnswers[`${c.dataset.r}-${c.dataset.c}`];
+        const r = c.dataset.r, col = c.dataset.c;
+        const ans = state.currentAnswers[`${r}-${col}`];
         if (c.textContent !== ans) {
             Haptics.success();
             c.textContent = ans;
             state.inventory.hints--;
+            state.fixedCells[`${r}-${col}`] = 'hinted'; // Mark as hinted
+            renderGrid(state.lastGeneratedGrid); // Refresh grid to apply hinted style and remove 'empty' class
             saveCurrentToSession();
             updateUI();
             updateProgressBar();
@@ -760,13 +815,16 @@ function useCrystal() {
     let count = 0;
     const cells = Array.from(document.querySelectorAll('.cell.empty'));
     for (let c of cells) {
-        const ans = state.currentAnswers[`${c.dataset.r}-${c.dataset.c}`];
+        const r = c.dataset.r, col = c.dataset.c;
+        const ans = state.currentAnswers[`${r}-${col}`];
         if (c.textContent !== ans) {
             c.textContent = ans;
+            state.fixedCells[`${r}-${col}`] = 'hinted'; // Mark as hinted
             count++;
             if (count >= 3) break;
         }
     }
+    renderGrid(state.lastGeneratedGrid); // Refresh grid
     saveCurrentToSession();
     updateUI();
     updateProgressBar();

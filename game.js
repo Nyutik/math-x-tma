@@ -36,6 +36,7 @@ let state = {
     unlockedHard: parseInt(localStorage.getItem('mx_unlocked_hard') || '1'),
     unlockedExpert: parseInt(localStorage.getItem('mx_unlocked_expert') || '1'),
     streak: parseInt(localStorage.getItem('mx_streak') || '0'),
+    dailyCompleted: localStorage.getItem('mx_daily_completed') === 'true',
     inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram","starry","cyberpunk"]}'),
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
@@ -164,8 +165,9 @@ function updateUI() {
     const dailyTitle = document.getElementById('daily-title');
     const dailySubtitle = document.getElementById('daily-subtitle');
     const today = getLocalDateStr();
+    const isDailyFullyCompleted = state.lastDaily === today && state.dailyCompleted;
     if (dailyTitle && dailySubtitle) {
-        if (state.lastDaily === today) {
+        if (isDailyFullyCompleted) {
             dailyTitle.textContent = state.lang === 'ru' ? 'ВЫЗОВ ВЫПОЛНЕН' : 'CHALLENGE DONE';
             dailySubtitle.innerHTML = `<span style="color: #00ff88;">✓</span> ${getTimeToMidnight()}`;
         } else {
@@ -238,6 +240,7 @@ function saveData() {
     localStorage.setItem('mx_unlocked_expert', state.unlockedExpert);
     localStorage.setItem('mx_inv', JSON.stringify(state.inventory));
     localStorage.setItem('mx_last_daily', state.lastDaily);
+    localStorage.setItem('mx_daily_completed', state.dailyCompleted ? 'true' : 'false');
     localStorage.setItem('mx_last_bonus', state.lastBonus);
     localStorage.setItem('mx_stats', JSON.stringify(state.stats));
     localStorage.setItem('mx_active_session', JSON.stringify(state.activeSession));
@@ -517,8 +520,14 @@ function startLevel(diff, num) {
     state.isDaily = (num === 'Daily');
     if (state.isDaily) {
         const today = getLocalDateStr();
-        if (state.lastDaily === today) {
-            // Already completed - allow replay but show completion message
+        // Reset dailyCompleted if it's a new day
+        if (state.lastDaily !== today) {
+            state.dailyCompleted = false;
+            localStorage.setItem('mx_daily_completed', 'false');
+        }
+        const isCompletedToday = state.lastDaily === today && state.dailyCompleted;
+        
+        if (isCompletedToday) {
             state.isDailyCompleted = true;
         } else {
             state.isDailyCompleted = false;
@@ -717,6 +726,8 @@ function checkWin() {
     localStorage.removeItem('mx_active_session');
     if (state.isDaily) {
         state.lastDaily = getLocalDateStr();
+        state.dailyCompleted = true;
+        localStorage.setItem('mx_daily_completed', 'true');
         state.inventory.crystals++; // Reward crystal for Daily
     }
     else if (!state.isBattle) {

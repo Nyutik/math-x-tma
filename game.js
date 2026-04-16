@@ -10,7 +10,7 @@ const I18N = {
         easy: "ЛЕГКО", medium: "СРЕДНЕ", hard: "СЛОЖНО", expert: "ЭКСПЕРТ",
         paused: "ПАУЗА", resume: "ПРОДОЛЖИТЬ", gallery: "ГАЛЕРЕЯ", missions: "ЗАДАНИЯ",
         music: "Музыка", sound: "Звуки", theme: "Тема", daily_reward: "Ежедневный Бонус", language: "Язык",
-        theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм"
+        theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм", theme_starry: "Звёзды", theme_cyberpunk: "Киберпанк"
     },
     en: {
         play: "PLAY", daily_level: "CHALLENGE", battle: "BATTLE", shop: "SHOP", stats: "STATS",
@@ -21,7 +21,7 @@ const I18N = {
         easy: "EASY", medium: "MEDIUM", hard: "HARD", expert: "EXPERT",
         paused: "PAUSED", resume: "RESUME", gallery: "GALLERY", missions: "MISSIONS",
         music: "Music", sound: "Sound", theme: "Theme", daily_reward: "Daily Reward", language: "Language",
-        theme_onyx: "Onyx", theme_light: "Light", theme_amethyst: "Amethyst", theme_paper: "Paper", theme_telegram: "Telegram"
+        theme_onyx: "Onyx", theme_light: "Light", theme_amethyst: "Amethyst", theme_paper: "Paper", theme_telegram: "Telegram", theme_starry: "Starry", theme_cyberpunk: "Cyberpunk"
     }
 };
 
@@ -35,7 +35,7 @@ let state = {
     unlockedMedium: parseInt(localStorage.getItem('mx_unlocked_medium') || '1'),
     unlockedHard: parseInt(localStorage.getItem('mx_unlocked_hard') || '1'),
     unlockedExpert: parseInt(localStorage.getItem('mx_unlocked_expert') || '1'),
-    inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram"]}'),
+    inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram","starry","cyberpunk"]}'),
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
     stats: (() => {

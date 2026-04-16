@@ -47,7 +47,6 @@
 }
 
 .theme-telegram {
-...
     --bg-onyx: var(--tg-theme-bg-color, #ffffff);
     --card-onyx: var(--tg-theme-secondary-bg-color, #f4f4f5);
     --accent: var(--tg-theme-button-color, #2481cc);
@@ -56,6 +55,68 @@
     --text-dim: var(--tg-theme-hint-color, #999999);
     --glass: var(--tg-theme-secondary-bg-color, rgba(0, 0, 0, 0.05));
     --glass-border: var(--tg-theme-hint-color, rgba(0, 0, 0, 0.1));
+}
+
+.theme-starry {
+    --bg-onyx: #0a0a1a;
+    --card-onyx: #151530;
+    --accent: #c0a0ff;
+    --accent-glow: rgba(192, 160, 255, 0.3);
+    --text: #e8e0ff;
+    --text-dim: #8888aa;
+    --glass: rgba(192, 160, 255, 0.1);
+    --glass-border: rgba(192, 160, 255, 0.2);
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+        radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 230px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 300px 200px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 350px 150px, #fff, transparent),
+        radial-gradient(2px 2px at 420px 50px, rgba(255,255,255,0.8), transparent);
+    background-size: 450px 250px;
+    animation: twinkle 8s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+.theme-cyberpunk {
+    --bg-onyx: #1a0a1a;
+    --card-onyx: #2a1a2a;
+    --accent: #ff00ff;
+    --accent-glow: rgba(255, 0, 255, 0.4);
+    --text: #00ffaa;
+    --text-dim: #aa88ff;
+    --glass: rgba(255, 0, 255, 0.1);
+    --glass-border: rgba(255, 0, 255, 0.3);
+    background: linear-gradient(135deg, #1a0a1a 0%, #0a1a1a 50%, #1a0a1a 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-cyberpunk::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 0, 255, 0.03) 2px,
+        rgba(255, 0, 255, 0.03) 4px
+    );
+    pointer-events: none;
+    animation: glitch-scan 10s linear infinite;
+}
+
+@keyframes glitch-scan {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; user-select: none; }

@@ -142,6 +142,9 @@ function applyTheme(t) {
     document.querySelectorAll('.theme-circle').forEach(c => {
         c.classList.toggle('active', c.dataset.theme === t);
     });
+    document.querySelectorAll('.theme-option').forEach(o => {
+        o.querySelector('.theme-circle').classList.toggle('active', o.dataset.theme === t);
+    });
 }
 
 function updateUI() {
@@ -224,9 +227,20 @@ function updateUI() {
     document.querySelectorAll('#theme-selector .theme-circle').forEach(circle => {
         const theme = circle.dataset.theme;
         const isOwned = state.inventory.themes.includes(theme);
-        circle.classList.toggle('hidden', !isOwned);
+        const option = circle.closest('.theme-option');
+        if (option) option.classList.toggle('hidden', !isOwned);
         circle.classList.toggle('active', theme === state.theme);
         circle.title = I18N[state.lang][`theme_${theme}`] || theme;
+    });
+    
+    // Add click handlers for theme options
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.onclick = function() {
+            const theme = this.dataset.theme;
+            if (state.inventory.themes.includes(theme)) {
+                applyTheme(theme);
+            }
+        };
     });
 }
 
@@ -1072,10 +1086,11 @@ function checkAndClaimMissions() {
     const today = getLocalDateStr();
     let totalReward = 0;
     let claimed = false;
+    let missionNames = [];
     
     const localMissions = [
-        { id: 'solve_3', goal: 3, reward: 50 },
-        { id: 'solve_10', goal: 10, reward: 200 }
+        { id: 'solve_3', goal: 3, reward: 50, title: state.lang === 'ru' ? 'Реши 3 уровня' : 'Solve 3 levels' },
+        { id: 'solve_10', goal: 10, reward: 200, title: state.lang === 'ru' ? 'Математик' : 'Mathematician' }
     ];
     
     for (let i = 0; i < localMissions.length; i++) {
@@ -1084,6 +1099,7 @@ function checkAndClaimMissions() {
         if (state.stats.totalSolved >= m.goal) {
             state.coins += m.reward;
             totalReward += m.reward;
+            missionNames.push(m.title);
             claimedMissions[m.id] = today;
             claimed = true;
         }
@@ -1093,7 +1109,8 @@ function checkAndClaimMissions() {
         localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
         saveData(); updateUI();
         if (totalReward > 0) {
-            showToast('+' + totalReward + ' ' + (state.lang === 'ru' ? '🪙 за задания!' : '🪙 from missions!'));
+            const missionText = missionNames.join(', ');
+            showToast('+' + totalReward + ' 🪙 ' + (state.lang === 'ru' ? 'за:' : 'from:') + ' ' + missionText);
         }
     }
 }

@@ -324,7 +324,18 @@ function initApp() {
 
     document.querySelectorAll('.btn-close-modal').forEach(b => {
         if (!b.id || (b.id !== 'pause-to-menu-btn' && b.id !== 'win-to-menu-btn')) {
-            b.onclick = () => { Haptics.light(); closeModal(); };
+            b.onclick = () => { 
+                Haptics.light(); 
+                const wasLevelModal = !document.getElementById('level-modal').classList.contains('hidden');
+                closeModal();
+                if (wasLevelModal) {
+                    switchScreen('menu');
+                    state.isGameActive = false;
+                    state.activeSession = null;
+                    localStorage.removeItem('mx_active_session');
+                    updateUI();
+                }
+            };
         }
     });
 

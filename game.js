@@ -293,10 +293,9 @@ function initApp() {
         closeModal(); 
         clearInterval(state.timerInterval);
         clearInterval(state.botInterval);
-        switchScreen('menu');
         state.isGameActive = false;
-        state.activeSession = null;
-        localStorage.removeItem('mx_active_session');
+        saveCurrentToSession(true); // Save progress before leaving
+        showModal('level');
         updateUI();
         if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
     });
@@ -374,8 +373,8 @@ function handleBackAction() {
     clearInterval(state.timerInterval);
     clearInterval(state.botInterval);
     state.isGameActive = false;
-    state.activeSession = null;
-    localStorage.removeItem('mx_active_session');
+    // Save current progress before leaving
+    saveCurrentToSession(true);
     
     // Only go to level list for regular levels (not daily or battle)
     if (!state.isDaily && !state.isBattle) {
@@ -519,6 +518,17 @@ function startLevel(diff, num) {
     state.secondsElapsed = seconds;
     state.isFrozen = false;
 
+    // If loading from session, merge user input into the level grid
+    if (state.activeSession && state.activeSession.diff === diff && state.activeSession.num === num && state.activeSession.grid) {
+        for (let r = 0; r < level.grid.length; r++) {
+            for (let c = 0; c < level.grid[r].length; c++) {
+                if (level.grid[r][c] === '' && state.activeSession.grid[r] && state.activeSession.grid[r][c]) {
+                    level.grid[r][c] = state.activeSession.grid[r][c];
+                }
+            }
+        }
+    }
+    
     renderGrid(level.grid);
     saveCurrentToSession(true); // Force save session
     switchScreen('game');
@@ -743,8 +753,8 @@ function resumeGame() {
 }
 
 function saveCurrentToSession(force = false) {
-    if (!state.lastGeneratedGrid || state.isBattle) return;
-    const emptyCells = Array.from(document.querySelectorAll('.cell.empty'));
+    if (!state.lastGeneratedGrid || state.isBattle) return; // Don't save for battle
+    const emptyCells = Array.from(document.querySelectorAll('.cell.empty, .cell.hinted'));
     const hasInput = emptyCells.some(c => c.textContent !== '');
     if (!hasInput && !force) {
         state.activeSession = null;

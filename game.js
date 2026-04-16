@@ -201,8 +201,7 @@ function updateUI() {
     });
 
     const now = new Date();
-    const today = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
-    const bonusAvailable = state.lastBonus !== today;
+    const bonusAvailable = state.lastBonus !== getLocalDateStr();
     const claimNotif = document.getElementById('claim-notif');
     if (claimNotif) claimNotif.style.display = bonusAvailable ? 'block' : 'none';
     

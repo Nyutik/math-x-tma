@@ -294,8 +294,9 @@ function initApp() {
         clearInterval(state.timerInterval);
         clearInterval(state.botInterval);
         state.isGameActive = false;
-        saveCurrentToSession(true); // Save progress before leaving
-        showModal('level');
+        state.activeSession = null;
+        localStorage.removeItem('mx_active_session');
+        switchScreen('menu');
         updateUI();
         if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
     });

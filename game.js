@@ -313,7 +313,22 @@ function initApp() {
     };
 
     safeSetClick('start-game-btn', () => { showModal('level'); });
-    safeSetClick('start-daily-btn', () => { startLevel('hard', 'Daily'); });
+    safeSetClick('start-daily-btn', () => { 
+        const today = getLocalDateStr();
+        const isFullyCompleted = state.lastDaily === today && state.dailyCompleted;
+        
+        if (isFullyCompleted) {
+            showToast(state.lang === 'ru' ? 'Вызов уже выполнен! Жди следующий.' : 'Challenge already done! Wait for next.');
+            return;
+        }
+        
+        // Check if there's an active session (user was playing)
+        if (state.activeSession && state.activeSession.num === 'Daily' && state.activeSession.diff === 'hard') {
+            startLevel('hard', 'Daily');
+        } else {
+            startLevel('hard', 'Daily');
+        }
+    });
     safeSetClick('open-battle', () => { showModal('battle-lobby'); });
     safeSetClick('open-daily-bonus', () => { showModal('bonus'); });
     safeSetClick('open-rules-btn', () => { showModal('rules'); });

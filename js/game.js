@@ -947,12 +947,12 @@ function updateBonusModal() {
     const rewardAmount = document.getElementById('reward-amount');
     const claimBtn = document.getElementById('claim-btn');
     
+    const today = getLocalDateStr();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    
     if (streakDisplay && rewardAmount && claimBtn) {
-        const today = getLocalDateStr();
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().slice(0, 10);
-        
         // Calculate current streak
         let currentStreak = 0;
         if (state.lastBonus === today) {

@@ -51,22 +51,28 @@ class GameScore(BaseModel):
 @app.post("/auth")
 async def auth_user(user: UserAuth):
     try:
+        print(f"Auth request: {user.telegram_id}")
         res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", user.telegram_id).execute()
         if len(res.data) > 0:
             user_data = res.data[0]
+            print(f"User found: {user.telegram_id}")
             try:
                 supabase.schema("mathx").table("profiles").update({"last_login": datetime.now().isoformat()}).eq("telegram_id", user.telegram_id).execute()
             except: pass
             return {"status": "success", "user": user_data}
         else:
+            print(f"Creating new user: {user.telegram_id}")
             new_user = {
                 "telegram_id": user.telegram_id, "username": user.username, "display_name": user.display_name, 
                 "coins": 100, "xp": 0, "level": 1,
                 "unlocked_easy": 1, "unlocked_medium": 1, "unlocked_hard": 1, "unlocked_expert": 1
             }
             res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
+            if not res.data:
+                raise Exception("Failed to create user in Supabase (empty response)")
             return {"status": "created", "user": res.data[0]}
     except Exception as e:
+        print(f"CRITICAL ERROR /auth: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/sync")
@@ -80,6 +86,7 @@ async def sync_progress(data: SyncState):
         supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
         return {"status": "synced"}
     except Exception as e:
+        print(f"ERROR /sync: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/score")
@@ -111,6 +118,11 @@ async def get_user_stats(telegram_id: int):
 app.mount("/js", StaticFiles(directory="js"), name="js")
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
+# Ловушка для старых путей музыки (для кеша)
+@app.get("/paulyudin-chill-silent-bloom-chill.mp3")
+async def get_legacy_audio():
+    return FileResponse("assets/paulyudin-chill-silent-bloom-chill.mp3")
 
 @app.get("/")
 async def read_index():

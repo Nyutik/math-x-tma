@@ -1,7 +1,5 @@
 # Documentation
-*.md
-README.MD
-TODO.md
+/docs
 
 # Python
 __pycache__/

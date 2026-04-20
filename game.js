@@ -74,21 +74,31 @@ const tg = window.Telegram?.WebApp || {
     initDataUnsafe: { user: { first_name: "Игрок", id: 12345 } }
 };
 
-const API_URL = window.location.origin;
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
+console.log('🚀 MathX v5.0 Loaded - API:', API_URL);
 
 const ServerAPI = {
     get isTelegram() { return typeof tg !== 'undefined' && tg.initDataUnsafe?.user; },
-    get enabled() { return this.isTelegram; }, // Only use backend in Telegram
+    get enabled() { return this.isTelegram || (window.location.hostname === 'localhost'); },
     getTId() { return this.isTelegram ? tg.initDataUnsafe.user.id : 12345; },
     async call(path, method = 'GET', body = null) {
         if (!this.enabled) return null;
         try {
             const options = { method, headers: { 'Content-Type': 'application/json' } };
             if (body) options.body = JSON.stringify(body);
-            const res = await fetch(`${API_URL}${path}`, options);
-            if (!res.ok) return null;
-            return await res.json();
-        } catch (e) { return null; }
+            const endpoint = `${API_URL}${path.startsWith('/') ? path : '/' + path}`;
+            const res = await fetch(endpoint, options);
+            if (!res.ok) {
+                console.error(`[API] Error ${endpoint}:`, res.status);
+                return null;
+            }
+            const data = await res.json();
+            console.log(`[API] Success ${endpoint}:`, data);
+            return data;
+        } catch (e) { 
+            console.error(`[API] Fetch failed ${path}:`, e);
+            return null; 
+        }
     },
     async auth(user) { 
         return this.call('/auth', 'POST', { telegram_id: user.id, username: user.username, display_name: user.first_name }); 
@@ -103,7 +113,11 @@ const ServerAPI = {
             coins: state.coins, 
             xp: state.xp, 
             level: state.level, 
-            streak: 0 
+            streak: state.streak,
+            unlocked_easy: state.unlocked,
+            unlocked_medium: state.unlockedMedium,
+            unlocked_hard: state.unlockedHard,
+            unlocked_expert: state.unlockedExpert
         }); 
     },
     async saveScore(diff, time, points) {

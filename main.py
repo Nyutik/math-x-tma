@@ -1,6 +1,7 @@
 import os
+import traceback
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -51,28 +52,25 @@ class GameScore(BaseModel):
 @app.post("/auth")
 async def auth_user(user: UserAuth):
     try:
-        print(f"Auth request: {user.telegram_id}")
+        print(f"Auth request for ID: {user.telegram_id}")
         res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", user.telegram_id).execute()
         if len(res.data) > 0:
             user_data = res.data[0]
-            print(f"User found: {user.telegram_id}")
             try:
                 supabase.schema("mathx").table("profiles").update({"last_login": datetime.now().isoformat()}).eq("telegram_id", user.telegram_id).execute()
             except: pass
             return {"status": "success", "user": user_data}
         else:
-            print(f"Creating new user: {user.telegram_id}")
             new_user = {
                 "telegram_id": user.telegram_id, "username": user.username, "display_name": user.display_name, 
                 "coins": 100, "xp": 0, "level": 1,
                 "unlocked_easy": 1, "unlocked_medium": 1, "unlocked_hard": 1, "unlocked_expert": 1
             }
             res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
-            if not res.data:
-                raise Exception("Failed to create user in Supabase (empty response)")
             return {"status": "created", "user": res.data[0]}
     except Exception as e:
-        print(f"CRITICAL ERROR /auth: {str(e)}")
+        print("!!! AUTH ERROR !!!")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/sync")
@@ -86,8 +84,20 @@ async def sync_progress(data: SyncState):
         supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
         return {"status": "synced"}
     except Exception as e:
-        print(f"ERROR /sync: {str(e)}")
+        print("!!! SYNC ERROR !!!")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/game/start")
+async def start_game_record(request: Request):
+    try:
+        data = await request.json()
+        user_res = supabase.schema("mathx").table("profiles").select("id").eq("telegram_id", data["telegram_id"]).single().execute()
+        supabase.schema("mathx").table("games").insert({
+            "player_id": user_res.data["id"], "difficulty": data["difficulty"], "is_completed": False
+        }).execute()
+        return {"status": "game_started"}
+    except: return {"status": "ok_silent_error"}
 
 @app.post("/score")
 async def save_score(score: GameScore):
@@ -114,12 +124,17 @@ async def get_user_stats(telegram_id: int):
         return res.data
     except: return {}
 
+@app.get("/missions/{telegram_id}")
+async def get_missions(telegram_id: int):
+    # Заглушка для миссий
+    return []
+
 # --- РАЗДАЧА СТАТИКИ ---
 app.mount("/js", StaticFiles(directory="js"), name="js")
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
-# Ловушка для старых путей музыки (для кеша)
+# Ловушка для музыки
 @app.get("/paulyudin-chill-silent-bloom-chill.mp3")
 async def get_legacy_audio():
     return FileResponse("assets/paulyudin-chill-silent-bloom-chill.mp3")

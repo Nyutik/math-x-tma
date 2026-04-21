@@ -1,6 +1,6 @@
 // MathX Infinity Generator 4.1 - Fast & Stable
 (function() {
-    const GRID_SIZES = { easy: 5, medium: 7, hard: 9, expert: 11 };
+    const GRID_SIZES = { easy: 5, medium: 7, hard: 9, expert: 9 };
 
     // Быстрый и надежный генератор случайных чисел по сиду
     class SeededRNG {
@@ -29,21 +29,20 @@
             let operators = difficulty === 'easy' ? ['+', '-'] : (difficulty === 'medium' ? ['+', '-', '*'] : ['+', '-', '*', '/']);
 
             let attempts = 0;
-            while (attempts < 100) {
+            while (attempts < 200) {
                 attempts++;
                 const grid = Array(size).fill().map(() => Array(size).fill(''));
                 const values = {};
                 
-                // 1. Заполняем только ячейки для чисел (четные индексы, кроме последней строки/столбца)
+                // 1. Сначала заполняем только ячейки для чисел
                 for (let r = 0; r < size - 1; r += 2) {
                     for (let c = 0; c < size - 1; c += 2) {
                         values[`${r}-${c}`] = rng.randomInt(1, 9);
-                        grid[r][c] = String(values[`${r}-${c}`]);
                     }
                 }
 
                 let isValid = true;
-                // 2. Рассчитываем горизонтальные уравнения
+                // 2. Рассчитываем горизонтали
                 for (let r = 0; r < size - 1; r += 2) {
                     let res = values[`${r}-0`];
                     for (let c = 1; c < size - 2; c += 2) {
@@ -51,7 +50,7 @@
                         let next = values[`${r}-${c+1}`];
                         if (op === '/' && res % next !== 0) op = '+';
                         res = this.calculate(res, next, op);
-                        if (res === null || res < -50 || res > 1000) { isValid = false; break; }
+                        if (res === null || res < 1 || res > 300) { isValid = false; break; }
                         grid[r][c] = op;
                     }
                     if (!isValid) break;
@@ -60,7 +59,7 @@
                 }
                 if (!isValid) continue;
 
-                // 3. Рассчитываем вертикальные уравнения
+                // 3. Рассчитываем вертикали
                 for (let c = 0; c < size - 1; c += 2) {
                     let res = values[`0-${c}`];
                     for (let r = 1; r < size - 2; r += 2) {
@@ -68,7 +67,7 @@
                         let next = values[`${r+1}-${c}`];
                         if (op === '/' && res % next !== 0) op = '+';
                         res = this.calculate(res, next, op);
-                        if (res === null || res < -50 || res > 1000) { isValid = false; break; }
+                        if (res === null || res < 1 || res > 300) { isValid = false; break; }
                         grid[r][c] = op;
                     }
                     if (!isValid) break;
@@ -77,10 +76,10 @@
                 }
                 if (!isValid) continue;
 
-                // 4. Скрытие ячеек (только числа, не операторы и не результаты)
+                // 4. Скрытие ячеек
                 const answers = {};
                 const fixedCells = {};
-                const hides = { easy: 3, medium: 8, hard: 15, expert: 25 };
+                const hides = { easy: 4, medium: 9, hard: 16, expert: 22 };
                 const targetHidden = hides[difficulty] || 5;
                 
                 let possible = [];
@@ -95,17 +94,18 @@
 
                 let hiddenCount = 0;
                 possible.forEach(pos => {
-                    const val = grid[pos.r][pos.c];
+                    const val = String(values[`${pos.r}-${pos.c}`]);
                     if (hiddenCount < targetHidden) {
                         grid[pos.r][pos.c] = '';
                         answers[`${pos.r}-${pos.c}`] = val;
                         hiddenCount++;
                     } else {
+                        grid[pos.r][pos.c] = val;
                         fixedCells[`${pos.r}-${pos.c}`] = true;
                     }
                 });
 
-                // Все остальные ячейки (операторы, равно, результаты) - фиксированные
+                // Операторы и результаты всегда фиксированы
                 for (let r = 0; r < size; r++) {
                     for (let c = 0; c < size; c++) {
                         if (grid[r][c] !== '' && !answers[`${r}-${c}`]) {

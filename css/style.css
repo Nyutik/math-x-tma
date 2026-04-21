@@ -340,3 +340,18 @@ body {
 .leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+/* DESKTOP ADAPTATION */
+@media (max-height: 850px) {
+    .hub-header { margin-bottom: 10px; padding-top: 5px; }
+    .main-play-card { min-height: 90px; margin-bottom: 8px; border-radius: 20px; }
+    .main-play-card h1 { font-size: 1.6rem; }
+    .streak-banner { padding: 10px 15px; margin-bottom: 10px; border-radius: 15px; }
+    .hub-grid { gap: 8px; margin-bottom: 10px; }
+    .hub-item { padding: 10px; border-radius: 18px; gap: 4px; }
+    .game-header-bar { margin-bottom: 10px; }
+    #math-grid { gap: 3px; padding: 8px; }
+    .cell { font-size: 1rem; }
+    .num-btn { height: 40px; font-size: 1.1rem; }
+    .action-btn { height: 46px; }
+}

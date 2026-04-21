@@ -24,3 +24,5 @@ dist/
 # Audio files (keep only if small)
 # *.mp3
 # *.wav
+
+docs/

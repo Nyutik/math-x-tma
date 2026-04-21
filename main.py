@@ -53,7 +53,7 @@ class GameScore(BaseModel):
 async def auth_user(user: UserAuth):
     try:
         print(f"Auth request for ID: {user.telegram_id}")
-        res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", user.telegram_id).execute()
+        res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", user.telegram_id).execute(); print(f"[DB DEBUG] Result: {res}")
         if len(res.data) > 0:
             user_data = res.data[0]
             try:

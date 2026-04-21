@@ -1,0 +1,22 @@
+name: Deploy MathX to VPS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploying via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: glitched-arena.myftp.org
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/math-x-tma
+            git fetch --all
+            git reset --hard origin/master
+            # systemctl restart math.service

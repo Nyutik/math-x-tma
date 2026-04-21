@@ -117,7 +117,12 @@ const ServerAPI = {
             unlocked_easy: state.unlocked,
             unlocked_medium: state.unlockedMedium,
             unlocked_hard: state.unlockedHard,
-            unlocked_expert: state.unlockedExpert
+            unlocked_expert: state.unlockedExpert,
+            theme: state.theme,
+            owned_themes: state.inventory.themes || ["onyx", "light", "telegram"],
+            hints: state.inventory.hints || 0,
+            crystals: state.inventory.crystals || 0,
+            freezes: state.inventory.freezes || 0
         }); 
     },
     async saveScore(diff, time, points) {
@@ -297,9 +302,28 @@ window.onload = async () => {
     
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
-        state.coins = serverData.user.coins;
-        state.xp = serverData.user.xp;
-        state.level = serverData.user.level;
+        const u = serverData.user;
+        state.coins = Math.max(state.coins, u.coins || 0);
+        state.xp = Math.max(state.xp, u.xp || 0);
+        state.level = Math.max(state.level, u.level || 1);
+        state.unlocked = Math.max(state.unlocked, u.unlocked_easy || 1);
+        state.unlockedMedium = Math.max(state.unlockedMedium, u.unlocked_medium || 1);
+        state.unlockedHard = Math.max(state.unlockedHard, u.unlocked_hard || 1);
+        state.unlockedExpert = Math.max(state.unlockedExpert, u.unlocked_expert || 1);
+        
+        state.inventory.hints = Math.max(state.inventory.hints || 0, u.hints !== null && u.hints !== undefined ? u.hints : 3);
+        state.inventory.crystals = Math.max(state.inventory.crystals || 0, u.crystals || 0);
+        state.inventory.freezes = Math.max(state.inventory.freezes || 0, u.freezes || 0);
+        
+        const dbThemes = u.owned_themes || ["onyx", "light", "telegram"];
+        const localThemes = state.inventory.themes || ["onyx", "light", "telegram"];
+        state.inventory.themes = [...new Set([...localThemes, ...dbThemes])];
+        
+        if (u.theme && state.inventory.themes.includes(u.theme)) {
+            state.theme = u.theme;
+        }
+
+        saveData();
     }
 
     applyLanguage();

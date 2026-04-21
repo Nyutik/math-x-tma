@@ -42,6 +42,11 @@ class SyncState(BaseModel):
     unlocked_medium: int
     unlocked_hard: int
     unlocked_expert: int
+    theme: Optional[str] = "onyx"
+    owned_themes: Optional[List[str]] = ["onyx", "light", "telegram"]
+    hints: Optional[int] = 3
+    crystals: Optional[int] = 0
+    freezes: Optional[int] = 0
 
 class GameScore(BaseModel):
     telegram_id: int
@@ -79,7 +84,9 @@ async def sync_progress(data: SyncState):
         update_fields = {
             "coins": data.coins, "xp": data.xp, "level": data.level, "daily_streak": data.streak,
             "unlocked_easy": data.unlocked_easy, "unlocked_medium": data.unlocked_medium,
-            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert
+            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert,
+            "theme": data.theme, "owned_themes": data.owned_themes,
+            "hints": data.hints, "crystals": data.crystals, "freezes": data.freezes
         }
         supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
         return {"status": "synced"}

@@ -1,16 +1,16 @@
-﻿// MathX Infinity - Core Engine 5.0 (Full Backend & Haptics)
+// MathX Infinity - Core Engine 5.0 (Full Backend & Haptics)
 
 const I18N = {
     ru: {
-        play: "╨Ш╨У╨а╨Р╨в╨м", daily_level: "╨Т╨л╨Ч╨Ю╨Т", battle: "╨С╨Ш╨в╨Т╨Р", shop: "╨Ь╨Р╨У╨Р╨Ч╨Ш╨Э", stats: "╨Ш╨Э╨д╨Ю",
-        hint: "╨Я╨Ю╨Ф╨б╨Ъ╨Р╨Ч╨Ъ╨Р", claim: "╨Ч╨Р╨С╨а╨Р╨в╨м", ranking: "╨а╨Х╨Щ╨в╨Ш╨Э╨У", settings: "╨Э╨Р╨б╨в╨а╨Ю╨Щ╨Ъ╨Ш",
-        level_label: "╨г╨а╨Ю╨Т╨Х╨Э╨м", next_level: "╨Ф╨Р╨Ы╨м╨и╨Х", to_menu: "╨Т ╨│╨╗╨░╨▓╨╜╨╛╨╡ ╨╝╨╡╨╜╤О",
-        rules_title: "╨Я╤А╨░╨▓╨╕╨╗╨░ ╨╕╨│╤А╤Л", battle_title: "╨С╨Ш╨в╨Т╨Р", daily_title: "╨Т╨л╨Ч╨Ю╨Т ╨Ф╨Э╨п",
-        opponent: "╨Я╨а╨Ю╨в╨Ш╨Т╨Э╨Ш╨Ъ", battle_win: "╨Т╨л ╨Я╨Ю╨С╨Х╨Ф╨Ш╨Ы╨Ш!", battle_lose: "╨Т╨л ╨Я╨а╨Ю╨Ш╨У╨а╨Р╨Ы╨Ш",
-        easy: "╨Ы╨Х╨У╨Ъ╨Ю", medium: "╨б╨а╨Х╨Ф╨Э╨Х", hard: "╨б╨Ы╨Ю╨Ц╨Э╨Ю", expert: "╨н╨Ъ╨б╨Я╨Х╨а╨в",
-        paused: "╨Я╨Р╨г╨Ч╨Р", resume: "╨Я╨а╨Ю╨Ф╨Ю╨Ы╨Ц╨Ш╨в╨м", gallery: "╨У╨Р╨Ы╨Х╨а╨Х╨п", missions: "╨Ч╨Р╨Ф╨Р╨Э╨Ш╨п",
-        music: "╨Ь╤Г╨╖╤Л╨║╨░", sound: "╨Ч╨▓╤Г╨║╨╕", theme: "╨в╨╡╨╝╨░", daily_reward: "╨Х╨╢╨╡╨┤╨╜╨╡╨▓╨╜╤Л╨╣ ╨С╨╛╨╜╤Г╤Б", language: "╨п╨╖╤Л╨║",
-        theme_onyx: "╨Ю╨╜╨╕╨║╤Б", theme_light: "╨б╨▓╨╡╤В╨╗╨░╤П", theme_amethyst: "╨Р╨╝╨╡╤В╨╕╤Б╤В", theme_paper: "╨С╤Г╨╝╨░╨│╨░", theme_telegram: "╨в╨╡╨╗╨╡╨│╤А╨░╨╝", theme_starry: "╨Ч╨▓╤С╨╖╨┤╤Л", theme_cyberpunk: "╨Ъ╨╕╨▒╨╡╤А╨┐╨░╨╜╨║"
+        play: "ИГРАТЬ", daily_level: "ВЫЗОВ", battle: "БИТВА", shop: "МАГАЗИН", stats: "ИНФО",
+        hint: "ПОДСКАЗКА", claim: "ЗАБРАТЬ", ranking: "РЕЙТИНГ", settings: "НАСТРОЙКИ",
+        level_label: "УРОВЕНЬ", next_level: "ДАЛЬШЕ", to_menu: "В главное меню",
+        rules_title: "Правила игры", battle_title: "БИТВА", daily_title: "ВЫЗОВ ДНЯ",
+        opponent: "ПРОТИВНИК", battle_win: "ВЫ ПОБЕДИЛИ!", battle_lose: "ВЫ ПРОИГРАЛИ",
+        easy: "ЛЕГКО", medium: "СРЕДНЕ", hard: "СЛОЖНО", expert: "ЭКСПЕРТ",
+        paused: "ПАУЗА", resume: "ПРОДОЛЖИТЬ", gallery: "ГАЛЕРЕЯ", missions: "ЗАДАНИЯ",
+        music: "Музыка", sound: "Звуки", theme: "Тема", daily_reward: "Ежедневный Бонус", language: "Язык",
+        theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм", theme_starry: "Звёзды", theme_cyberpunk: "Киберпанк"
     },
     en: {
         play: "PLAY", daily_level: "CHALLENGE", battle: "BATTLE", shop: "SHOP", stats: "STATS",
@@ -71,11 +71,11 @@ let state = {
 const tg = window.Telegram?.WebApp || { 
     ready: () => {}, expand: () => {}, 
     HapticFeedback: { impactOccurred: () => {}, notificationOccurred: () => {} },
-    initDataUnsafe: { user: { first_name: "╨Ш╨│╤А╨╛╨║", id: 12345 } }
+    initDataUnsafe: { user: { first_name: "Игрок", id: 12345 } }
 };
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
-console.log('ЁЯЪА MathX v5.0 Loaded - API:', API_URL);
+console.log('🚀 MathX v5.0 Loaded - API:', API_URL);
 
 const ServerAPI = {
     get isTelegram() { return typeof tg !== 'undefined' && tg.initDataUnsafe?.user; },
@@ -117,12 +117,7 @@ const ServerAPI = {
             unlocked_easy: state.unlocked,
             unlocked_medium: state.unlockedMedium,
             unlocked_hard: state.unlockedHard,
-            unlocked_expert: state.unlockedExpert,
-            hints: state.inventory.hints,
-            crystals: state.inventory.crystals,
-            freezes: state.inventory.freezes,
-            theme: state.theme,
-            owned_themes: state.inventory.themes
+            unlocked_expert: state.unlockedExpert
         }); 
     },
     async saveScore(diff, time, points) {
@@ -175,7 +170,7 @@ function updateUI() {
     if (hubCoins) hubCoins.textContent = state.coins;
     
     const userLv = document.getElementById('user-level-tag');
-    if (userLv) userLv.textContent = `${state.lang === 'ru' ? '╨г╨а.' : 'LVL.'} ${state.level}`;
+    if (userLv) userLv.textContent = `${state.lang === 'ru' ? 'УР.' : 'LVL.'} ${state.level}`;
 
     const diffTag = document.getElementById('difficulty-tag');
     if (diffTag && state.diff) diffTag.textContent = I18N[state.lang][state.diff] || state.diff.toUpperCase();
@@ -194,12 +189,12 @@ function updateUI() {
     const isDailyFullyCompleted = state.lastDaily === today && state.dailyCompleted;
     if (dailyTitle && dailySubtitle) {
         if (isDailyFullyCompleted) {
-            dailyTitle.textContent = state.lang === 'ru' ? '╨Т╨л╨Ч╨Ю╨Т ╨Т╨л╨Я╨Ю╨Ы╨Э╨Х╨Э' : 'CHALLENGE DONE';
-            dailySubtitle.innerHTML = `<span style="color: #00ff88;">тЬУ</span> ${getTimeToMidnight()}`;
+            dailyTitle.textContent = state.lang === 'ru' ? 'ВЫЗОВ ВЫПОЛНЕН' : 'CHALLENGE DONE';
+            dailySubtitle.innerHTML = `<span style="color: #00ff88;">✓</span> ${getTimeToMidnight()}`;
         } else {
             dailyTitle.textContent = I18N[state.lang].daily_level;
             dailySubtitle.style.textAlign = 'left';
-            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? '╨╕ ╨Ъ╤А╨╕╤Б╤В╨░╨╗╨╗' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? '╨┤╨╛ ╤Б╨╝╨╡╨╜╤Л' : 'until reset'}</span>`;
+            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
         }
         if (window.lucide) lucide.createIcons();
     }
@@ -210,19 +205,17 @@ function updateUI() {
     const freezeCount = document.getElementById('freeze-count');
     if (freezeCount) freezeCount.textContent = state.inventory.freezes;
 
-    const crystalCount = document.getElementById("crystal-count");
+    const crystalCount = document.getElementById('crystal-count');
     if (crystalCount) crystalCount.textContent = state.inventory.crystals;
-    const hubCrystals = document.getElementById("hub-crystals");
-    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;
 
     const musicBtn = document.getElementById('toggle-music-btn');
     if (musicBtn && typeof AudioManager !== 'undefined') {
-        musicBtn.textContent = AudioManager.isMusicOff ? (state.lang === 'ru' ? '╨Т╨л╨Ъ╨Ы' : 'OFF') : (state.lang === 'ru' ? '╨Т╨Ъ╨Ы' : 'ON');
+        musicBtn.textContent = AudioManager.isMusicOff ? (state.lang === 'ru' ? 'ВЫКЛ' : 'OFF') : (state.lang === 'ru' ? 'ВКЛ' : 'ON');
     }
 
     const soundBtn = document.getElementById('toggle-sound-btn');
     if (soundBtn && typeof AudioManager !== 'undefined') {
-        soundBtn.textContent = AudioManager.isMuted ? (state.lang === 'ru' ? '╨Т╨л╨Ъ╨Ы' : 'OFF') : (state.lang === 'ru' ? '╨Т╨Ъ╨Ы' : 'ON');
+        soundBtn.textContent = AudioManager.isMuted ? (state.lang === 'ru' ? 'ВЫКЛ' : 'OFF') : (state.lang === 'ru' ? 'ВКЛ' : 'ON');
     }
 
     const pauseBtn = document.getElementById('pause-game-btn');
@@ -242,7 +235,7 @@ function updateUI() {
     if (modalClaimBtn) {
         modalClaimBtn.classList.toggle('disabled', !bonusAvailable);
         if (!bonusAvailable) {
-            modalClaimBtn.innerHTML = state.lang === 'ru' ? '╨Я╨Ю╨Ы╨г╨з╨Х╨Э╨Ю' : 'CLAIMED';
+            modalClaimBtn.innerHTML = state.lang === 'ru' ? 'ПОЛУЧЕНО' : 'CLAIMED';
         } else {
             modalClaimBtn.innerHTML = `<span data-i18n="claim">${I18N[state.lang].claim}</span> <span id="reward-amount">50</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>`;
             if (window.lucide) lucide.createIcons();
@@ -299,84 +292,21 @@ function addTransaction(type, category, amount) {
     state.transactions[type][category][today] += amount;
 }
 
-const HolidayEngine = {
-    holidays: [
-        { id: 'may_1', name: 'Праздник весны', date: '2026-05-01', reward: 1000, art_id: 101 },
-        { id: 'may_9', name: 'День Победы', date: '2026-05-09', reward: 2000, art_id: 102 }
-    ],
-    check() {
-        const now = new Date();
-        const hubBonus = document.getElementById('hub-holiday-bonus');
-        if (!hubBonus) return;
-        let activeHoliday = null;
-        this.holidays.forEach(h => {
-            const hDate = new Date(h.date);
-            const diffDays = Math.ceil((hDate - now) / (1000 * 60 * 60 * 24));
-            if (diffDays <= 7 && diffDays > 0) {
-                hubBonus.classList.remove('hidden');
-                hubBonus.innerHTML = ⏰ \ \ \ \;
-            } else if (diffDays === 0) {
-                activeHoliday = h;
-                hubBonus.classList.remove('hidden');
-                hubBonus.style.background = 'linear-gradient(90deg, #8b5cf6, #d946ef)';
-                hubBonus.innerHTML = 🎁 \! \;
-                hubBonus.onclick = () => this.startEvent(h);
-            }
-        });
-        if (!activeHoliday && now.getDate() > 10) hubBonus.classList.add('hidden');
-    },
-    startEvent(h) {
-        const completed = JSON.parse(localStorage.getItem('mx_event_done') || '[]');
-        if (completed.includes(h.id)) return alert(state.lang === 'ru' ? 'Событие уже пройдено!' : 'Event already completed!');
-        state.isHolidayEvent = h;
-        startLevel('expert', 99);
-    },
-    completeEvent() {
-        if (!state.isHolidayEvent) return;
-        const h = state.isHolidayEvent;
-        const completed = JSON.parse(localStorage.getItem('mx_event_done') || '[]');
-        completed.push(h.id);
-        localStorage.setItem('mx_event_done', JSON.stringify(completed));
-        state.coins += h.reward;
-        if (!state.inventory.arts) state.inventory.arts = [];
-        state.inventory.arts.push(h.art_id);
-        updateUI();
-        alert(🏆 \ \ +\ 🪙);
-        state.isHolidayEvent = null;
-        ServerAPI.sync();
-    }
-};
-
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
     
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
-        const s = serverData.user;
-        state.coins = Math.max(state.coins, s.coins || 0);
-        state.xp = Math.max(state.xp, s.xp || 0);
-        state.level = Math.max(state.level, s.level || 1);
-        if (s.theme) state.theme = s.theme;
-        if (s.owned_themes) {
-            state.inventory.themes = [...new Set([...state.inventory.themes, ...s.owned_themes])];
-            if (state.inventory.themes.length > s.owned_themes.length) ServerAPI.sync();
-        }
-        if (s.hints !== undefined) state.inventory.hints = Math.max(state.inventory.hints, s.hints);
-        if (s.crystals !== undefined) state.inventory.crystals = Math.max(state.inventory.crystals, s.crystals);
-        if (s.freezes !== undefined) state.inventory.freezes = Math.max(state.inventory.freezes, s.freezes);
-        state.unlocked = Math.max(state.unlocked, s.unlocked_easy || 1);
-        state.unlockedMedium = Math.max(state.unlockedMedium, s.unlocked_medium || 1);
-        state.unlockedHard = Math.max(state.unlockedHard, s.unlocked_hard || 1);
-        state.unlockedExpert = Math.max(state.unlockedExpert, s.unlocked_expert || 1);
-        ServerAPI.sync();
+        state.coins = serverData.user.coins;
+        state.xp = serverData.user.xp;
+        state.level = serverData.user.level;
     }
 
     applyLanguage();
     applyTheme(state.theme);
-    initApp();
     updateUI();
+    initApp();
     initShop();
-    if (typeof HolidayEngine !== "undefined") HolidayEngine.check();
 };
 
 function safeSetClick(id, fn) { 
@@ -402,7 +332,7 @@ function initApp() {
         const isFullyCompleted = state.lastDaily === today && state.dailyCompleted;
         
         if (isFullyCompleted) {
-            showToast(state.lang === 'ru' ? '╨Т╤Л╨╖╨╛╨▓ ╤Г╨╢╨╡ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜! ╨Ц╨┤╨╕ ╤Б╨╗╨╡╨┤╤Г╤О╤Й╨╕╨╣.' : 'Challenge already done! Wait for next.');
+            showToast(state.lang === 'ru' ? 'Вызов уже выполнен! Жди следующий.' : 'Challenge already done! Wait for next.');
             return;
         }
         
@@ -464,7 +394,7 @@ function initApp() {
         saveData(); updateUI(); closeModal();
         
         if (currentStreak > 1) {
-            showToast((state.lang === 'ru' ? 'ЁЯФе ' : 'ЁЯФе ') + currentStreak + (state.lang === 'ru' ? ' ╨┤╨╡╨╜╤М ╨┐╨╛╨┤╤А╤П╨┤! ╨С╨╛╨╜╤Г╤Б x' : ' days in a row! Bonus x') + currentStreak);
+            showToast((state.lang === 'ru' ? '🔥 ' : '🔥 ') + currentStreak + (state.lang === 'ru' ? ' день подряд! Бонус x' : ' days in a row! Bonus x') + currentStreak);
         }
     });
 
@@ -496,7 +426,7 @@ function initApp() {
         btn.onclick = () => {
             Haptics.light();
             const stake = parseInt(btn.dataset.stake);
-            if (state.coins < stake) { Haptics.error(); return alert('╨Э╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ ╨╝╨╛╨╜╨╡╤В!'); }
+            if (state.coins < stake) { Haptics.error(); return alert('Недостаточно монет!'); }
             state.coins -= stake;
             addTransaction('spent', 'battle', stake);
             state.battleStake = stake;
@@ -583,7 +513,7 @@ function initShop() {
             if (id && id.startsWith('theme_')) {
                 const themeName = id.replace('theme_', '');
                 if (state.inventory.themes.includes(themeName)) {
-                    btn.textContent = state.lang === 'ru' ? '╨Ъ╤Г╨┐╨╗╨╡╨╜╨╛' : 'Owned';
+                    btn.textContent = state.lang === 'ru' ? 'Куплено' : 'Owned';
                     btn.classList.add('disabled');
                 }
             }
@@ -596,10 +526,10 @@ function initShop() {
             const price = parseInt(btn.dataset.price);
             if (!id || !price) return;
             if (id.startsWith('theme_') && state.inventory.themes.includes(id.replace('theme_', ''))) return;
-            if (state.coins < price) { Haptics.error(); return alert('╨Э╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ ╨╝╨╛╨╜╨╡╤В!'); }
+            if (state.coins < price) { Haptics.error(); return alert('Недостаточно монет!'); }
             
             Haptics.warning();
-            if (!confirm(state.lang === 'ru' ? `╨Ъ╤Г╨┐╨╕╤В╤М ╨╖╨░ ${price}?` : `Buy for ${price}?`)) return;
+            if (!confirm(state.lang === 'ru' ? `Купить за ${price}?` : `Buy for ${price}?`)) return;
 
             state.coins -= price;
             addTransaction('spent', id, price);
@@ -645,7 +575,7 @@ function getTimeToMidnight() {
     const diff = midnight - now;
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}╤З ${mins}╨╝`;
+    return `${hours}ч ${mins}м`;
 }
 
 function startLevel(diff, num) {
@@ -678,7 +608,7 @@ function startLevel(diff, num) {
         // Use num as seed for consistency if not daily
         const seed = state.isDaily ? null : (typeof num === 'number' ? num : null);
         level = state.isDaily ? window.LevelGenerator.generateDaily(getLocalDateStr()) : window.LevelGenerator.generateLevel(diff, seed);
-        if (!level) return alert('╨Ю╤И╨╕╨▒╨║╨░ ╨│╨╡╨╜╨╡╤А╨░╤Ж╨╕╨╕!');
+        if (!level) return alert('Ошибка генерации!');
         state.lastGeneratedGrid = level.grid;
         seconds = 0;
     }
@@ -773,7 +703,7 @@ function inputNum(n) {
 function validateLines() {
     if (!state.lastGeneratedGrid) return;
     const size = state.lastGeneratedGrid.length;
-    // ╨У╨╛╤А╨╕╨╖╨╛╨╜╤В╨░╨╗╤М╨╜╤Л╨╡
+    // Горизонтальные
     for (let r = 0; r < size; r += 2) {
         const line = [];
         for (let c = 0; c < size; c++) {
@@ -784,7 +714,7 @@ function validateLines() {
         const target = document.querySelector(`.cell[data-r="${r}"][data-c="${size-1}"]`);
         if (target) target.style.color = res ? 'var(--success-color)' : 'var(--accent)';
     }
-    // ╨Т╨╡╤А╤В╨╕╨║╨░╨╗╤М╨╜╤Л╨╡
+    // Вертикальные
     for (let c = 0; c < size; c += 2) {
         const line = [];
         for (let r = 0; r < size; r++) {
@@ -894,16 +824,16 @@ function checkWin() {
     
     const winRewardText = document.getElementById('win-reward-text');
     if (winRewardText) {
-        let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} ЁЯкЩ</span>`;
+        let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} 🪙</span>`;
         if (state.isDaily) {
-            rewardText += ` <span style="color:#a855f7; font-size:1.2rem; text-shadow:0 0 10px #a855f7;">+1 ЁЯТО</span>`;
+            rewardText += ` <span style="color:#a855f7; font-size:1.2rem; text-shadow:0 0 10px #a855f7;">+1 💎</span>`;
         }
         winRewardText.innerHTML = rewardText;
     }
     
     saveData();
     ServerAPI.saveScore(state.diff, state.secondsElapsed, reward);
-    if (typeof HolidayEngine !== "undefined" && state.isHolidayEvent) HolidayEngine.completeEvent();
+    
     showModal(state.isBattle ? 'battle-result' : 'win');
     
     // Theme-specific confetti
@@ -1035,16 +965,16 @@ function updateBonusModal() {
         
         // Check if already claimed today
         if (state.lastBonus === today) {
-            streakDisplay.innerHTML = (state.lang === 'ru' ? 'тЬУ ╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╛ ╤Б╨╡╨│╨╛╨┤╨╜╤П!' : 'тЬУ Claimed today!') + ' ЁЯФе ' + state.streak;
+            streakDisplay.innerHTML = (state.lang === 'ru' ? '✓ Получено сегодня!' : '✓ Claimed today!') + ' 🔥 ' + state.streak;
             rewardAmount.textContent = '0';
             claimBtn.classList.add('disabled');
-            claimBtn.innerHTML = state.lang === 'ru' ? '╨Я╨Ю╨Ы╨г╨з╨Х╨Э╨Ю' : 'CLAIMED';
+            claimBtn.innerHTML = state.lang === 'ru' ? 'ПОЛУЧЕНО' : 'CLAIMED';
         } else {
             const bonus = 50 * (currentStreak + 1);
-            streakDisplay.innerHTML = 'ЁЯФе ' + (currentStreak + 1) + (state.lang === 'ru' ? ' ╨┤╨╜╨╡╨╣ ╨┐╨╛╨┤╤А╤П╨┤!' : ' days in a row!');
+            streakDisplay.innerHTML = '🔥 ' + (currentStreak + 1) + (state.lang === 'ru' ? ' дней подряд!' : ' days in a row!');
             rewardAmount.textContent = bonus;
             claimBtn.classList.remove('disabled');
-            claimBtn.innerHTML = '<span data-i18n="claim">' + (state.lang === 'ru' ? '╨Я╨Ю╨Ы╨г╨з╨Ш╨в╨м' : 'CLAIM') + '</span> <span id="reward-amount">' + bonus + '</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>';
+            claimBtn.innerHTML = '<span data-i18n="claim">' + (state.lang === 'ru' ? 'ПОЛУЧИТЬ' : 'CLAIM') + '</span> <span id="reward-amount">' + bonus + '</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>';
         }
         
         if (window.lucide) lucide.createIcons();
@@ -1168,20 +1098,20 @@ async function renderStats() {
         }
         
         const categoryLabels = state.lang === 'ru' ? {
-            'level': '╨Ч╨░ ╤Г╤А╨╛╨▓╨╜╨╕',
-            'daily': '╨Ч╨░ ╨▓╤Л╨╖╨╛╨▓',
-            'battle': '╨Ч╨░ ╨▒╨╕╤В╨▓╤Г',
-            'mission': '╨Ч╨░ ╨╖╨░╨┤╨░╨╜╨╕╤П',
-            'daily_bonus': '╨С╨╛╨╜╤Г╤Б ╨┤╨╜╤П',
-            'hint_5': '╨Я╨╛╨┤╤Б╨║╨░╨╖╨║╨╕ (5)',
-            'hint': '╨Я╨╛╨┤╤Б╨║╨░╨╖╨║╨░',
-            'crystal_3': '╨Ъ╤А╨╕╤Б╤В╨░╨╗╨╗╤Л (3)',
-            'crystal': '╨Ъ╤А╨╕╤Б╤В╨░╨╗╨╗',
-            'freeze': '╨Ч╨░╨╝╨╛╤А╨╛╨╖╨║╨░',
-            'battle': '╨С╨╕╤В╨▓╨░',
-            'theme_amethyst': '╨в╨╡╨╝╨░: ╨Р╨╝╨╡╤В╨╕╤Б╤В',
-            'theme_starry': '╨в╨╡╨╝╨░: ╨Ч╨▓╤С╨╖╨┤╤Л',
-            'theme_cyberpunk': '╨в╨╡╨╝╨░: ╨Ъ╨╕╨▒╨╡╤А╨┐╨░╨╜╨║'
+            'level': 'За уровни',
+            'daily': 'За вызов',
+            'battle': 'За битву',
+            'mission': 'За задания',
+            'daily_bonus': 'Бонус дня',
+            'hint_5': 'Подсказки (5)',
+            'hint': 'Подсказка',
+            'crystal_3': 'Кристаллы (3)',
+            'crystal': 'Кристалл',
+            'freeze': 'Заморозка',
+            'battle': 'Битва',
+            'theme_amethyst': 'Тема: Аметист',
+            'theme_starry': 'Тема: Звёзды',
+            'theme_cyberpunk': 'Тема: Киберпанк'
         } : {
             'level': 'For levels',
             'daily': 'For daily',
@@ -1213,14 +1143,14 @@ async function renderStats() {
         
         transContainer.innerHTML = `
             <div style="margin-top:15px; padding:15px; background:var(--card-onyx); border-radius:15px;">
-                <h4 style="margin:0 0 10px 0; color:var(--gold);">${state.lang === 'ru' ? '╨С╨░╨╗╨░╨╜╤Б' : 'Balance'}</h4>
+                <h4 style="margin:0 0 10px 0; color:var(--gold);">${state.lang === 'ru' ? 'Баланс' : 'Balance'}</h4>
                 <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:bold; margin-bottom:15px;">
                     <span style="color:var(--success-color);">+${totalEarned}</span>
                     <span style="color:#ff6b6b;">-${totalSpent}</span>
                     <span style="color:var(--accent);">= ${state.coins}</span>
                 </div>
-                ${earnedBreakdown ? `<div style="margin-bottom:10px;"><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? '╨Я╨╛╨╗╤Г╤З╨╡╨╜╨╛:' : 'Earned:'}</span>${earnedBreakdown}</div>` : ''}
-                ${spentBreakdown ? `<div><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? '╨Я╨╛╤В╤А╨░╤З╨╡╨╜╨╛:' : 'Spent:'}</span>${spentBreakdown}</div>` : ''}
+                ${earnedBreakdown ? `<div style="margin-bottom:10px;"><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? 'Получено:' : 'Earned:'}</span>${earnedBreakdown}</div>` : ''}
+                ${spentBreakdown ? `<div><span style="font-size:0.8rem; color:var(--text-dim);">${state.lang === 'ru' ? 'Потрачено:' : 'Spent:'}</span>${spentBreakdown}</div>` : ''}
             </div>
         `;
     }
@@ -1239,8 +1169,8 @@ async function renderMissions() {
     
     // Get mission titles based on language
     const missionTitles = state.lang === 'ru' ? {
-        'solve_3': '╨а╨╡╤И╨╕ 3 ╤Г╤А╨╛╨▓╨╜╤П',
-        'solve_10': '╨Ь╨░╤В╨╡╨╝╨░╤В╨╕╨║: 10 ╤Г╤А╨╛╨▓╨╜╨╡╨╣'
+        'solve_3': 'Реши 3 уровня',
+        'solve_10': 'Математик: 10 уровней'
     } : {
         'solve_3': 'Solve 3 levels',
         'solve_10': 'Mathematician: 10 levels'
@@ -1261,7 +1191,7 @@ async function renderMissions() {
     const allClaimed = missions.every(x => isClaimed(x.id));
     const timerHTML = (allDone && allClaimed) ? 
         `<div style="text-align:center; padding:15px; color:var(--text-dim); font-size:0.85rem;">
-            ${state.lang === 'ru' ? '╨Э╨╛╨▓╤Л╨╡ ╨╖╨░╨┤╨░╨╜╨╕╤П ╤З╨╡╤А╨╡╨╖:' : 'New missions in:'} ${getTimeToMidnight()}
+            ${state.lang === 'ru' ? 'Новые задания через:' : 'New missions in:'} ${getTimeToMidnight()}
         </div>` : '';
     
     list.innerHTML = timerHTML + missions.map(x => {
@@ -1274,7 +1204,7 @@ async function renderMissions() {
                 <span style="font-size:0.8rem; color:var(--text-dim);">${x.progress}/${x.goal}</span>
             </div>
             <button class="buy-btn ${(!done || claimed) ? 'disabled' : ''}" onclick="window.claimMissionReward('${x.id}', ${x.reward})" style="padding: 8px 12px; font-size: 0.8rem;">
-                ${claimed ? 'тЬУ' : x.reward + ' '}<i data-lucide="${claimed ? 'check' : 'coins'}" style="width:12px; height:12px;"></i>
+                ${claimed ? '✓' : x.reward + ' '}<i data-lucide="${claimed ? 'check' : 'coins'}" style="width:12px; height:12px;"></i>
             </button>
         </div>
     `}).join('');
@@ -1306,8 +1236,8 @@ function checkAndClaimMissions() {
     let missionNames = [];
     
     const localMissions = [
-        { id: 'solve_3', goal: 3, reward: 50, title: state.lang === 'ru' ? '╨а╨╡╤И╨╕ 3 ╤Г╤А╨╛╨▓╨╜╤П' : 'Solve 3 levels' },
-        { id: 'solve_10', goal: 10, reward: 200, title: state.lang === 'ru' ? '╨Ь╨░╤В╨╡╨╝╨░╤В╨╕╨║' : 'Mathematician' }
+        { id: 'solve_3', goal: 3, reward: 50, title: state.lang === 'ru' ? 'Реши 3 уровня' : 'Solve 3 levels' },
+        { id: 'solve_10', goal: 10, reward: 200, title: state.lang === 'ru' ? 'Математик' : 'Mathematician' }
     ];
     
     for (let i = 0; i < localMissions.length; i++) {
@@ -1328,7 +1258,7 @@ function checkAndClaimMissions() {
         saveData(); updateUI();
         if (totalReward > 0) {
             const missionText = missionNames.join(', ');
-            showToast('+' + totalReward + ' ЁЯкЩ ' + (state.lang === 'ru' ? '╨╖╨░:' : 'from:') + ' ' + missionText);
+            showToast('+' + totalReward + ' 🪙 ' + (state.lang === 'ru' ? 'за:' : 'from:') + ' ' + missionText);
         }
     }
 }
@@ -1347,23 +1277,23 @@ function showToast(message) {
 async function renderLeaderboard() {
     const list = document.getElementById('leader-list');
     if (!list) return;
-    list.innerHTML = '<p style="text-align:center; padding:20px;">╨Ч╨░╨│╤А╤Г╨╖╨║╨░...</p>';
+    list.innerHTML = '<p style="text-align:center; padding:20px;">Загрузка...</p>';
     const data = await ServerAPI.getLeaderboard();
     if (data && data.length > 0) {
         list.innerHTML = data.map((player, i) => `
             <div style="background:var(--card-onyx); padding:12px 20px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid ${i < 3 ? 'var(--gold)' : 'var(--glass-border)'};">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <span style="font-weight:900; color:var(--gold); width:20px;">${i + 1}</span>
-                    <span style="font-weight:bold;">${player.display_name || '╨Ш╨│╤А╨╛╨║'}</span>
+                    <span style="font-weight:bold;">${player.display_name || 'Игрок'}</span>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:bold; color:var(--accent);">${player.xp} XP</div>
-                    <div style="font-size:0.7rem; color:var(--text-dim);">╨г╨а. ${player.level}</div>
+                    <div style="font-size:0.7rem; color:var(--text-dim);">УР. ${player.level}</div>
                 </div>
             </div>
         `).join('');
     } else {
-        list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:20px;">╨а╨╡╨╣╤В╨╕╨╜╨│ ╨┐╨╛╨║╨░ ╨┐╤Г╤Б╤В</p>';
+        list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:20px;">Рейтинг пока пуст</p>';
     }
 }
 
@@ -1379,10 +1309,12 @@ async function renderGallery() {
     grid.innerHTML = ART_COLLECTION.map(art => {
         const isUnlocked = solved >= art.levels_required;
         return `<div class="art-card" style="position:relative; aspect-ratio:1; border-radius:20px; overflow:hidden; background:var(--card-onyx); border:1px solid var(--glass-border);">
-            <img src="${art.url}" style="width:100%; height:100%; object-fit:cover; filter:${isUnlocked ? "none" : "blur(15px)"}; opacity:${isUnlocked ? "1" : "0.4"};">
-            ${isUnlocked ? `<div class="art-actions" style="position:absolute; bottom:10px; right:10px;"><a href="${art.url}" target="_blank" class="icon-btn-blur" style="width:32px; height:32px; background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; display:flex; align-items:center; justify-content:center; border-radius:8px;"><i data-lucide="download" style="width:16px; height:16px;"></i></a></div>` : `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);"><i data-lucide="lock" style="color:var(--gold); margin-bottom:5px;"></i><span style="font-size:0.7rem; font-weight:bold;">${solved}/${art.levels_required}</span></div>`}
+            <img src="${art.url}" style="width:100%; height:100%; object-fit:cover; filter:${isUnlocked ? 'none' : 'blur(15px)'}; opacity:${isUnlocked ? '1' : '0.4'};">
+            ${!isUnlocked ? `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);">
+                <i data-lucide="lock" style="color:var(--gold); margin-bottom:5px;"></i><span style="font-size:0.7rem;">${solved}/${art.levels_required}</span>
+            </div>` : ''}
         </div>`;
-    }).join("");
+    }).join('');
     if (window.lucide) lucide.createIcons();
 }
 
@@ -1434,5 +1366,3 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
-
-

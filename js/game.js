@@ -289,7 +289,9 @@ function applyLanguage() {
 
 function applyTheme(t) { 
     state.theme = t;
-    document.body.className = `theme-${t}`; 
+    if (document.body.className !== `theme-${t}`) {
+        document.body.className = `theme-${t}`; 
+    }
     localStorage.setItem('mx_theme', t);
     document.querySelectorAll('.theme-circle').forEach(c => {
         c.classList.toggle('active', c.dataset.theme === t);

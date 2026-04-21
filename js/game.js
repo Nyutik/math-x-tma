@@ -20,7 +20,7 @@ const I18N = {
         vs_bot: "Играть с Ботом", vs_bot_desc: "Тренируйся и зарабатывай монеты",
         vs_friend: "Играть с Другом", vs_friend_desc: "Мультиплеер скоро появится!",
         bot_easy: "Легкий Бот", bot_med: "Средний Бот", bot_hard: "Жесткий Бот",
-        reward: "Награда:", bot_faster: "Противник оказался быстрее!",
+        reward: "Награда:", bot_faster: "Противник оказался быстрее!", stake: "Ставка",
         levels_desc: "Выбор уровня", player_rank: "РАНГ ИГРОКА", stats_solved: "Решено уровней", stats_crystals: "Кристаллы",
         shop_boosters: "БУСТЕРЫ", shop_themes: "ТЕМЫ",
         pack_hints: "Пак подсказок", pack_hints_desc: "5 быстрых решений",

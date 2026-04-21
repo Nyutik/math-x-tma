@@ -262,7 +262,7 @@ function updateUI() {
         option.onclick = function() {
             const theme = this.dataset.theme;
             if (state.inventory.themes.includes(theme)) {
-                applyTheme(theme);
+                applyTheme(theme); ServerAPI.sync();
             }
         };
     });
@@ -305,7 +305,7 @@ window.onload = async () => {
     if (serverData?.user) {
         state.coins = serverData.user.coins;
         state.xp = serverData.user.xp;
-        state.level = serverData.user.level;
+        state.level = serverData.user.level;`n        if (serverData.user.theme) state.theme = serverData.user.theme;
     }
 
     applyLanguage();
@@ -1372,6 +1372,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

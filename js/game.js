@@ -364,14 +364,28 @@ window.onload = async () => {
 
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
-        state.coins = serverData.user.coins;
-        state.xp = serverData.user.xp;
-        state.level = serverData.user.level;
-        if (serverData.user.theme) state.theme = serverData.user.theme;
-        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
-        if (serverData.user.hints !== undefined) state.inventory.hints = serverData.user.hints;
-        if (serverData.user.crystals !== undefined) state.inventory.crystals = serverData.user.crystals;
-        if (serverData.user.freezes !== undefined) state.inventory.freezes = serverData.user.freezes;
+        // ”мна€ синхронизаци€: если локально прогресса (XP) больше, чем на сервере, пушим локальные данные
+        const serverXp = serverData.user.xp || 0;
+        const localXp = state.xp || 0;
+        
+        if (localXp > serverXp) {
+            console.log("?? Local progress is ahead. Syncing UP to server...");
+            await ServerAPI.sync();
+        } else {
+            console.log("?? Server progress is ahead or equal. Loading FROM server...");
+            state.coins = serverData.user.coins;
+            state.xp = serverData.user.xp;
+            state.level = serverData.user.level;
+            if (serverData.user.theme) state.theme = serverData.user.theme;
+            if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
+            if (serverData.user.hints !== undefined) state.inventory.hints = serverData.user.hints;
+            if (serverData.user.crystals !== undefined) state.inventory.crystals = serverData.user.crystals;
+            if (serverData.user.freezes !== undefined) state.inventory.freezes = serverData.user.freezes;
+            if (serverData.user.unlocked_easy !== undefined) state.unlocked = serverData.user.unlocked_easy;
+            if (serverData.user.unlocked_medium !== undefined) state.unlockedMedium = serverData.user.unlocked_medium;
+            if (serverData.user.unlocked_hard !== undefined) state.unlockedHard = serverData.user.unlocked_hard;
+            if (serverData.user.unlocked_expert !== undefined) state.unlockedExpert = serverData.user.unlocked_expert;
+        }
     }
 
     applyLanguage();
@@ -1439,6 +1453,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

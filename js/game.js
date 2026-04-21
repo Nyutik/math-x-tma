@@ -373,7 +373,15 @@ window.onload = async () => {
         state.level = Math.max(state.level, s.level || 1);
         
         if (s.theme) state.theme = s.theme;
-        if (s.owned_themes) state.inventory.themes = [...new Set([...state.inventory.themes, ...s.owned_themes])];
+        if (s.owned_themes) {
+            console.log("?? Merging themes. Local:", state.inventory.themes, "Server:", s.owned_themes);
+            state.inventory.themes = [...new Set([...state.inventory.themes, ...s.owned_themes])];
+            // Если после слияния локальный список больше, сразу пушим на сервер
+            if (state.inventory.themes.length > s.owned_themes.length) {
+                 console.log("?? Local has MORE themes. Syncing to server...");
+                 ServerAPI.sync();
+            }
+        }
         
         // Инвентарь: берем то, где больше
         if (s.hints !== undefined) state.inventory.hints = Math.max(state.inventory.hints, s.hints);
@@ -602,6 +610,8 @@ function initShop() {
             const id = btn.dataset.id;
             if (id && id.startsWith('theme_')) {
                 const themeName = id.replace('theme_', '');
+                const themeTitleEl = btn.closest('.shop-item').querySelector('h3');
+                if (themeTitleEl) themeTitleEl.textContent = I18N[state.lang]['theme_' + themeName] || themeName;
                 if (state.inventory.themes.includes(themeName)) {
                     btn.textContent = state.lang === 'ru' ? 'РљСѓРїР»РµРЅРѕ' : 'Owned';
                     btn.classList.add('disabled');
@@ -1456,6 +1466,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

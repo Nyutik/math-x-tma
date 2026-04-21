@@ -13,9 +13,10 @@ const I18N = {
         theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм", theme_starry: "Звёзды", theme_cyberpunk: "Киберпанк",
         rules_text_1: "1. <b>Цель:</b> Заполни пустые клетки цифрами от 1 до 9 так, чтобы все уравнения по горизонтали и вертикали стали верными.",
         rules_text_2: "2. <b>Порядок действий:</b> Все вычисления производятся строго <b>слева направо</b> и <b>сверху вниз</b>. Приоритет умножения и деления игнорируется.",
-        rules_text_3: "3. <b>Подсказки:</b> Если застрял, используй Подсказку (открывает 1 клетку) или Кристалл (открывает 3 клетки).",
+        rules_text_3: "3. <b>Бустеры:</b> Подсказка (1 клетка), Кристалл (3 клетки), Магнит (вписывает цифру в выбранную клетку) и Заморозка (остановка времени на 15с).",
         rules_text_4: "4. <b>Вызов дня:</b> Особый сложный уровень. Пройди его, чтобы получить много монет и редкий Кристалл!",
         rules_text_5: "5. <b>Ежедневный бонус:</b> Заходи в игру каждый день и забирай бесплатные монеты в главном меню!",
+        rules_text_6: "6. <b>Серия побед:</b> Заходи 7 дней подряд, чтобы получать x2 Опыта (XP) за каждый уровень!",
         missions_desc: "Выполняй задачи и получай монеты!", gallery_title: "Галерея артов",
         vs_bot: "Играть с Ботом", vs_bot_desc: "Тренируйся и зарабатывай монеты",
         vs_friend: "Играть с Другом", vs_friend_desc: "Мультиплеер скоро появится!",
@@ -48,9 +49,10 @@ const I18N = {
         theme_onyx: "Onyx", theme_light: "Light", theme_amethyst: "Amethyst", theme_paper: "Paper", theme_telegram: "Telegram", theme_starry: "Starry", theme_cyberpunk: "Cyberpunk",
         rules_text_1: "1. <b>Goal:</b> Fill empty cells with numbers 1 to 9 so that all horizontal and vertical equations are correct.",
         rules_text_2: "2. <b>Order of Operations:</b> All calculations are strictly <b>left to right</b> and <b>top to bottom</b>. Multiplication and division priority is ignored.",
-        rules_text_3: "3. <b>Hints:</b> If stuck, use a Hint (reveals 1 cell) or a Crystal (reveals 3 cells).",
+        rules_text_3: "3. <b>Boosters:</b> Hint (1 cell), Crystal (3 cells), Magnet (pulls correct number) and Freeze (stops timer for 15s).",
         rules_text_4: "4. <b>Daily Challenge:</b> A special hard level. Beat it to get many coins and a rare Crystal!",
         rules_text_5: "5. <b>Daily Bonus:</b> Enter the game every day and claim free coins in the main menu!",
+        rules_text_6: "6. <b>Win Streak:</b> Enter 7 days in a row to get x2 XP for every level!",
         missions_desc: "Complete tasks and earn coins!", gallery_title: "Art Gallery",
         vs_bot: "Play vs Bot", vs_bot_desc: "Practice and earn coins",
         vs_friend: "Play vs Friend", vs_friend_desc: "Multiplayer coming soon!",
@@ -1247,10 +1249,15 @@ async function renderStats() {
             'crystal_3': 'Кристаллы (3)',
             'crystal': 'Кристалл',
             'freeze': 'Заморозка',
+            'magnet': 'Магнит',
+            'invite': 'Приглашение друга',
             'battle': 'Битва',
             'theme_amethyst': 'Тема: Аметист',
             'theme_starry': 'Тема: Звёзды',
-            'theme_cyberpunk': 'Тема: Киберпанк'
+            'theme_cyberpunk': 'Тема: Киберпанк',
+            'theme_matrix': 'Тема: Матрица',
+            'theme_sunset': 'Тема: Закат',
+            'theme_neon': 'Тема: Неон'
         } : {
             'level': 'For levels',
             'daily': 'For daily',
@@ -1262,7 +1269,15 @@ async function renderStats() {
             'crystal_3': 'Crystals (3)',
             'crystal': 'Crystal',
             'freeze': 'Freeze',
-            'battle': 'Battle'
+            'magnet': 'Magnet',
+            'invite': 'Friend Invite',
+            'battle': 'Battle',
+            'theme_amethyst': 'Theme: Amethyst',
+            'theme_starry': 'Theme: Starry',
+            'theme_cyberpunk': 'Theme: Cyberpunk',
+            'theme_matrix': 'Theme: Matrix',
+            'theme_sunset': 'Theme: Sunset',
+            'theme_neon': 'Theme: Neon'
         };
         
         // Build breakdown list

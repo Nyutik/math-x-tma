@@ -619,8 +619,9 @@ function initShop() {
             if (id.startsWith('theme_') && state.inventory.themes.includes(id.replace('theme_', ''))) return;
             if (state.coins < price) { Haptics.error(); return alert('Недостаточно монет!'); }
             
-            Haptics.warning();
-            if (!confirm(state.lang === 'ru' ? `Купить за ${price}?` : `Buy for ${price}?`)) return;
+                        Haptics.warning();
+            const confirmMsg = state.lang === "ru" ? "Купить за " + price + "?" : "Buy for " + price + "?";
+            if (!confirm(confirmMsg)) return;
 
             state.coins -= price;
             addTransaction('spent', id, price);
@@ -1480,6 +1481,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

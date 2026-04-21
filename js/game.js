@@ -306,7 +306,7 @@ window.onload = async () => {
     applyTheme(state.theme);
     updateUI();
     initApp();
-    initShop();
+    updateUI(); initShop();
 };
 
 function safeSetClick(id, fn) { 
@@ -1366,4 +1366,5 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 

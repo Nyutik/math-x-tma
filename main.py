@@ -69,7 +69,7 @@ async def auth_user(user: UserAuth):
             new_user = {
                 "telegram_id": user.telegram_id, "username": user.username, "display_name": user.display_name,  
                 "coins": 100, "xp": 0, "level": 1,
-                "unlocked_easy": 1, "unlocked_medium": 1, "unlocked_hard": 1, "unlocked_expert": 1, "theme": "onyx",
+                "unlocked_easy": 1, "unlocked_medium": 1, "unlocked_hard": 1, "unlocked_expert": 1, "theme": "onyx", "owned_themes": ["onyx", "light", "telegram", "starry", "cyberpunk"],
                 "hints": 5, "crystals": 2, "freezes": 3
             }
             print(f"[AUTH] Creating new user: {user.telegram_id}")
@@ -85,7 +85,7 @@ async def sync_progress(data: SyncState):
         update_fields = {
             "coins": data.coins, "xp": data.xp, "level": data.level, "daily_streak": data.streak,
             "unlocked_easy": data.unlocked_easy, "unlocked_medium": data.unlocked_medium,
-            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert, "theme": data.theme,
+            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert, "theme": data.theme, "owned_themes": data.owned_themes,
             "hints": data.hints, "crystals": data.crystals, "freezes": data.freezes
         }
         supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
@@ -148,4 +148,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 

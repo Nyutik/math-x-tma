@@ -305,7 +305,7 @@ window.onload = async () => {
     if (serverData?.user) {
         state.coins = serverData.user.coins;
         state.xp = serverData.user.xp;
-        state.level = serverData.user.level;`n        if (serverData.user.theme) state.theme = serverData.user.theme;
+        state.level = serverData.user.level;`n        if (serverData.user.theme) state.theme = serverData.user.theme;`n        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
     }
 
     applyLanguage();
@@ -1372,6 +1372,8 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
+
 
 
 

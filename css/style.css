@@ -58,35 +58,25 @@
 }
 
 .theme-starry {
-    --bg-onyx: #050510;
-    --card-onyx: rgba(20, 20, 50, 0.6);
+    --bg-onyx: #0a0a1a;
+    --card-onyx: #151530;
     --accent: #c0a0ff;
-    --accent-glow: rgba(192, 160, 255, 0.4);
+    --accent-glow: rgba(192, 160, 255, 0.3);
     --text: #e8e0ff;
     --text-dim: #8888aa;
     --glass: rgba(192, 160, 255, 0.1);
     --glass-border: rgba(192, 160, 255, 0.2);
-    background: radial-gradient(circle at center, #101025 0%, #050510 100%);
-    position: relative;
-}
-.theme-starry::before {
-    content: "";
-    position: absolute; inset: 0;
     background-image: 
-        radial-gradient(1px 1px at 10% 10%, #fff, transparent),
-        radial-gradient(1px 1px at 20% 50%, #fff, transparent),
-        radial-gradient(2px 2px at 30% 90%, #fff, transparent),
-        radial-gradient(1px 1px at 40% 20%, #fff, transparent),
-        radial-gradient(1px 1px at 50% 80%, #fff, transparent),
-        radial-gradient(2px 2px at 60% 30%, #fff, transparent),
-        radial-gradient(1px 1px at 70% 70%, #fff, transparent),
-        radial-gradient(1px 1px at 80% 40%, #fff, transparent),
-        radial-gradient(2px 2px at 90% 10%, #fff, transparent),
-        radial-gradient(1px 1px at 95% 95%, #fff, transparent);
-    background-size: 200px 200px;
-    opacity: 0.5;
-    animation: twinkle 5s infinite alternate;
-    pointer-events: none;
+        radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+        radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 230px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 300px 200px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 350px 150px, #fff, transparent),
+        radial-gradient(2px 2px at 420px 50px, rgba(255,255,255,0.8), transparent);
+    background-size: 450px 250px;
+    animation: twinkle 8s ease-in-out infinite alternate;
 }
 
 @keyframes twinkle {
@@ -106,7 +96,7 @@
     --glass-border: rgba(255, 0, 255, 0.3);
     background: linear-gradient(135deg, #1a0a1a 0%, #0a1a1a 50%, #1a0a1a 100%);
     position: relative;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .theme-cyberpunk::before {
@@ -139,7 +129,7 @@ body {
     background-color: var(--bg-onyx);
     color: var(--text);
     height: 100dvh; width: 100vw;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -350,13 +340,3 @@ body {
 .leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-
-
-/* Scroll fix for Desktop */
-body { overflow-y: auto !important; height: auto !important; min-height: 100vh; }
-#app { height: auto !important; min-height: 100vh; }
-.screen { height: auto !important; min-height: 100vh; flex: none !important; }
-
-
-

@@ -17,6 +17,7 @@ const I18N = {
         rules_text_4: "4. <b>Вызов дня:</b> Особый сложный уровень. Пройди его, чтобы получить много монет и редкий Кристалл!",
         rules_text_5: "5. <b>Ежедневный бонус:</b> Заходи в игру каждый день и забирай бесплатные монеты в главном меню!",
         rules_text_6: "6. <b>Серия побед:</b> Заходи 7 дней подряд, чтобы получать x2 Опыта (XP) за каждый уровень!",
+        rules_text_7: "7. <b>Галерея:</b> Решай уровни, чтобы открывать кусочки артов-пазлов. Полностью собранный арт можно скачать!",
         missions_desc: "Выполняй задачи и получай монеты!", gallery_title: "Галерея артов",
         vs_bot: "Играть с Ботом", vs_bot_desc: "Тренируйся и зарабатывай монеты",
         vs_friend: "Играть с Другом", vs_friend_desc: "Мультиплеер скоро появится!",
@@ -65,7 +66,8 @@ const I18N = {
         pack_freeze: "Freeze", pack_freeze_desc: "Stop timer (15s)",
         theme_paper_desc: "Notebook style", theme_amethyst_desc: "Cosmic purple",
         theme_starry_desc: "Twinkling night sky", theme_cyberpunk_desc: "Neon and glitch effects",
-        level_select: "Select Level", level_complete: "LEVEL COMPLETED!", close: "CLOSE",
+        level_select: "Select Level", level_complete: "LEVEL COMPLETED!", close: "CLOSE", download: "Download",
+        rules_text_7: "7. <b>Gallery:</b> Solve levels to unlock puzzle pieces of art. A fully assembled art can be downloaded!",
         daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> & Crystal", battle_lobby: "Battle Lobby", player_name: "Player"
     }
 };
@@ -1490,8 +1492,31 @@ window.viewArt = function(url, isUnlocked) {
     Haptics.medium();
     const viewer = document.getElementById('art-viewer-modal');
     const img = document.getElementById('art-viewer-img');
+    const downloadBtn = document.getElementById('download-art-btn');
     if (viewer && img) {
         img.src = url;
+        if (downloadBtn) {
+            downloadBtn.onclick = async (e) => {
+                e.stopPropagation(); // prevent modal close
+                try {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = 'MathX_Art.jpg';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                    Haptics.success();
+                } catch (err) {
+                    console.error('Download failed', err);
+                    // Fallback for CORS or iOS
+                    window.open(url, '_blank');
+                }
+            };
+        }
         viewer.classList.remove('hidden');
     }
 };

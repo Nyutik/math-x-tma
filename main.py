@@ -1,4 +1,4 @@
-﻿import os
+import os
 import traceback
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Depends, Header, Request
@@ -42,11 +42,6 @@ class SyncState(BaseModel):
     unlocked_medium: int
     unlocked_hard: int
     unlocked_expert: int
-    hints: Optional[int] = 5
-    crystals: Optional[int] = 2
-    freezes: Optional[int] = 3
-    theme: Optional[str] = 'onyx'
-    owned_themes: Optional[List[str]] = []
 
 class GameScore(BaseModel):
     telegram_id: int
@@ -84,7 +79,7 @@ async def sync_progress(data: SyncState):
         update_fields = {
             "coins": data.coins, "xp": data.xp, "level": data.level, "daily_streak": data.streak,
             "unlocked_easy": data.unlocked_easy, "unlocked_medium": data.unlocked_medium,
-            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert, "hints": data.hints, "crystals": data.crystals, "freezes": data.freezes, "theme": data.theme, "owned_themes": data.owned_themes
+            "unlocked_hard": data.unlocked_hard, "unlocked_expert": data.unlocked_expert
         }
         supabase.schema("mathx").table("profiles").update(update_fields).eq("telegram_id", data.telegram_id).execute()
         return {"status": "synced"}
@@ -131,15 +126,15 @@ async def get_user_stats(telegram_id: int):
 
 @app.get("/missions/{telegram_id}")
 async def get_missions(telegram_id: int):
-    # Р—Р°РіР»СѓС€РєР° РґР»СЏ РјРёСЃСЃРёР№
+    # Заглушка для миссий
     return []
 
-# --- Р РђР—Р”РђР§Рђ РЎРўРђРўРРљР ---
+# --- РАЗДАЧА СТАТИКИ ---
 app.mount("/js", StaticFiles(directory="js"), name="js")
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
-# Р›РѕРІСѓС€РєР° РґР»СЏ РјСѓР·С‹РєРё
+# Ловушка для музыки
 @app.get("/paulyudin-chill-silent-bloom-chill.mp3")
 async def get_legacy_audio():
     return FileResponse("assets/paulyudin-chill-silent-bloom-chill.mp3")
@@ -158,5 +153,3 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-

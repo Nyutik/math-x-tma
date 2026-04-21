@@ -297,28 +297,9 @@ window.onload = async () => {
     
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
-        const s = serverData.user;
-        // Умное слияние: берем лучшее из локального и серверного
-        state.coins = Math.max(state.coins, s.coins || 0);
-        state.xp = Math.max(state.xp, s.xp || 0);
-        state.level = Math.max(state.level, s.level || 1);
-        
-        if (s.theme) state.theme = s.theme;
-        if (s.owned_themes) {
-            state.inventory.themes = [...new Set([...state.inventory.themes, ...s.owned_themes])];
-        }
-        
-        if (s.hints !== undefined) state.inventory.hints = Math.max(state.inventory.hints, s.hints);
-        if (s.crystals !== undefined) state.inventory.crystals = Math.max(state.inventory.crystals, s.crystals);
-        if (s.freezes !== undefined) state.inventory.freezes = Math.max(state.inventory.freezes, s.freezes);
-        
-        state.unlocked = Math.max(state.unlocked, s.unlocked_easy || 1);
-        state.unlockedMedium = Math.max(state.unlockedMedium, s.unlocked_medium || 1);
-        state.unlockedHard = Math.max(state.unlockedHard, s.unlocked_hard || 1);
-        state.unlockedExpert = Math.max(state.unlockedExpert, s.unlocked_expert || 1);
-
-        // Сразу сохраняем результат слияния обратно на сервер
-        ServerAPI.sync();
+        state.coins = serverData.user.coins;
+        state.xp = serverData.user.xp;
+        state.level = serverData.user.level;
     }
 
     applyLanguage();

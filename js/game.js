@@ -173,7 +173,7 @@ function updateUI() {
     const hubFreezes = document.getElementById('hub-freezes');
     if (hubFreezes) hubFreezes.textContent = state.inventory.freezes;
     const hubCrystals = document.getElementById('hub-crystals');
-    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;
+    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;`n    const gameCrystals = document.getElementById('crystal-count');`n    if (gameCrystals) gameCrystals.textContent = state.inventory.crystals;
     
     const userLv = document.getElementById('user-level-tag');
     if (userLv) userLv.textContent = `${state.lang === 'ru' ? 'РЈР .' : 'LVL.'} ${state.level}`;
@@ -364,28 +364,31 @@ window.onload = async () => {
 
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
-        // Умная синхронизация: если локально прогресса (XP) больше, чем на сервере, пушим локальные данные
-        const serverXp = serverData.user.xp || 0;
-        const localXp = state.xp || 0;
+        const s = serverData.user;
+        console.log("?? [SYNC] Data from server:", s);
         
-        if (localXp > serverXp) {
-            console.log("?? Local progress is ahead. Syncing UP to server...");
-            await ServerAPI.sync();
-        } else {
-            console.log("?? Server progress is ahead or equal. Loading FROM server...");
-            state.coins = serverData.user.coins;
-            state.xp = serverData.user.xp;
-            state.level = serverData.user.level;
-            if (serverData.user.theme) state.theme = serverData.user.theme;
-            if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
-            if (serverData.user.hints !== undefined) state.inventory.hints = serverData.user.hints;
-            if (serverData.user.crystals !== undefined) state.inventory.crystals = serverData.user.crystals;
-            if (serverData.user.freezes !== undefined) state.inventory.freezes = serverData.user.freezes;
-            if (serverData.user.unlocked_easy !== undefined) state.unlocked = serverData.user.unlocked_easy;
-            if (serverData.user.unlocked_medium !== undefined) state.unlockedMedium = serverData.user.unlocked_medium;
-            if (serverData.user.unlocked_hard !== undefined) state.unlockedHard = serverData.user.unlocked_hard;
-            if (serverData.user.unlocked_expert !== undefined) state.unlockedExpert = serverData.user.unlocked_expert;
-        }
+        // Берем МАКСИМАЛЬНЫЕ значения, чтобы не потерять прогресс и покупки
+        state.coins = Math.max(state.coins, s.coins || 0);
+        state.xp = Math.max(state.xp, s.xp || 0);
+        state.level = Math.max(state.level, s.level || 1);
+        
+        if (s.theme) state.theme = s.theme;
+        if (s.owned_themes) state.inventory.themes = [...new Set([...state.inventory.themes, ...s.owned_themes])];
+        
+        // Инвентарь: берем то, где больше
+        if (s.hints !== undefined) state.inventory.hints = Math.max(state.inventory.hints, s.hints);
+        if (s.crystals !== undefined) state.inventory.crystals = Math.max(state.inventory.crystals, s.crystals);
+        if (s.freezes !== undefined) state.inventory.freezes = Math.max(state.inventory.freezes, s.freezes);
+        
+        // Прогресс уровней
+        state.unlocked = Math.max(state.unlocked, s.unlocked_easy || 1);
+        state.unlockedMedium = Math.max(state.unlockedMedium, s.unlocked_medium || 1);
+        state.unlockedHard = Math.max(state.unlockedHard, s.unlocked_hard || 1);
+        state.unlockedExpert = Math.max(state.unlockedExpert, s.unlocked_expert || 1);
+
+        // Сразу сохраняем результат "слияния" обратно на сервер
+        ServerAPI.sync();
+    }
     }
 
     applyLanguage();
@@ -1453,6 +1456,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

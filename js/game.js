@@ -29,7 +29,7 @@ const I18N = {
         theme_paper_desc: "Стиль тетради", theme_amethyst_desc: "Космический фиолетовый",
         theme_starry_desc: "Мерцающее ночное небо", theme_cyberpunk_desc: "Неон и глитч-эффекты",
         level_select: "Выберите уровень", level_complete: "УРОВЕНЬ ПРОЙДЕН!", close: "ЗАКРЫТЬ",
-        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> и Кристалл", battle_lobby: "Режим Битвы"
+        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> и Кристалл", battle_lobby: "Режим Битвы", player_name: "Игрок"
     },
     en: {
         play: "PLAY", daily_level: "CHALLENGE", battle: "BATTLE", shop: "SHOP", stats: "STATS",
@@ -59,7 +59,7 @@ const I18N = {
         theme_paper_desc: "Notebook style", theme_amethyst_desc: "Cosmic purple",
         theme_starry_desc: "Twinkling night sky", theme_cyberpunk_desc: "Neon and glitch effects",
         level_select: "Select Level", level_complete: "LEVEL COMPLETED!", close: "CLOSE",
-        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> & Crystal", battle_lobby: "Battle Lobby"
+        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> & Crystal", battle_lobby: "Battle Lobby", player_name: "Player"
     }
 };
 
@@ -109,7 +109,7 @@ let state = {
 const tg = window.Telegram?.WebApp || { 
     ready: () => {}, expand: () => {}, 
     HapticFeedback: { impactOccurred: () => {}, notificationOccurred: () => {} },
-    initDataUnsafe: { user: { first_name: "Игрок", id: 12345 } }
+    initDataUnsafe: { user: { first_name: "", id: 12345 } }
 };
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
@@ -209,6 +209,12 @@ function applyTheme(t) {
 }
 
 function updateUI() {
+    const userNameEl = document.getElementById('user-name');
+    if (userNameEl) {
+        const tgName = tg.initDataUnsafe?.user?.first_name;
+        userNameEl.textContent = (tgName && tgName !== "Игрок") ? tgName : I18N[state.lang].player_name;
+    }
+
     const hubCoins = document.getElementById('hub-coins');
     if (hubCoins) hubCoins.textContent = state.coins;
     
@@ -1355,7 +1361,7 @@ async function renderLeaderboard() {
             <div style="background:var(--card-onyx); padding:12px 20px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid ${i < 3 ? 'var(--gold)' : 'var(--glass-border)'};">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <span style="font-weight:900; color:var(--gold); width:20px;">${i + 1}</span>
-                    <span style="font-weight:bold;">${player.display_name || 'Игрок'}</span>
+                    <span style="font-weight:bold;">${player.display_name || I18N[state.lang].player_name}</span>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:bold; color:var(--accent);">${player.xp} XP</div>

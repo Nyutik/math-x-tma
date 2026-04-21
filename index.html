@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MathX: Infinity</title>
-    <link rel="stylesheet" href="css/style.css?v=6.0">
+    <link rel="stylesheet" href="css/style.css?v=7.1">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>window.lucide?.createIcons();</script>
@@ -21,10 +21,10 @@
                         <img id="user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=MathX" alt="AV">
                     </div>
                     <div class="user-info">
-                        <h3 id="user-name">Игрок</h3>
+                        <h3 id="user-name">РРіСЂРѕРє</h3>
                         <div class="xp-bar-container">
                             <div class="xp-progress" id="xp-progress"></div>
-                            <span id="user-level-tag">УР. 1</span>
+                            <span id="user-level-tag">РЈР . 1</span>
                         </div>
                     </div>
                 </div>
@@ -45,16 +45,16 @@
             <main class="hub-main">
                 <button class="main-play-card" id="start-game-btn">
                     <div class="card-content">
-                        <h1 data-i18n="play">ИГРАТЬ</h1>
-                        <p data-i18n="levels_desc">Выбор уровня</p>
+                        <h1 data-i18n="play">РР“Р РђРўР¬</h1>
+                        <p data-i18n="levels_desc">Р’С‹Р±РѕСЂ СѓСЂРѕРІРЅСЏ</p>
                     </div>
                     <div class="card-icon"><i data-lucide="play"></i></div>
                 </button>
 
                 <button class="main-play-card daily-card" id="start-daily-btn" style="background: linear-gradient(135deg, #ff8a00, #e52e71); min-height: 100px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(255, 138, 0, 0.3);">
                     <div class="card-content">
-                        <h1 id="daily-title" data-i18n="daily_level" style="font-size: 1.5rem;">ВЫЗОВ</h1>
-                        <p id="daily-subtitle" data-i18n="daily_reward_desc" style="font-size: 0.8rem; font-weight: 700; opacity: 0.9; display: flex; align-items: center; gap: 4px;">+200 <i data-lucide="coins" style="width: 14px; height: 14px;"></i> и Кристалл</p>
+                        <h1 id="daily-title" data-i18n="daily_level" style="font-size: 1.5rem;">Р’Р«Р—РћР’</h1>
+                        <p id="daily-subtitle" data-i18n="daily_reward_desc" style="font-size: 0.8rem; font-weight: 700; opacity: 0.9; display: flex; align-items: center; gap: 4px;">+200 <i data-lucide="coins" style="width: 14px; height: 14px;"></i> Рё РљСЂРёСЃС‚Р°Р»Р»</p>
                     </div>
                     <div class="card-icon" style="font-size: 2.5rem;"><i data-lucide="calendar"></i></div>
                 </button>
@@ -62,37 +62,37 @@
                 <div class="streak-banner" id="open-daily-bonus">
                     <div class="streak-info">
                         <i data-lucide="flame"></i>
-                        <span id="streak-text">Серия: 0 дней</span>
+                        <span id="streak-text">РЎРµСЂРёСЏ: 0 РґРЅРµР№</span>
                     </div>
-                    <div class="claim-notif" id="claim-notif" data-i18n="claim">Забрать!</div>
+                    <div class="claim-notif" id="claim-notif" data-i18n="claim">Р—Р°Р±СЂР°С‚СЊ!</div>
                 </div>
 
                 <div class="hub-grid">
                     <button class="hub-item" id="open-leaderboard">
                         <i data-lucide="trophy"></i>
-                        <span data-i18n="ranking">Рейтинг</span>
+                        <span data-i18n="ranking">Р РµР№С‚РёРЅРі</span>
                     </button>
                     <button class="hub-item" id="open-shop">
                         <i data-lucide="shopping-bag"></i>
-                        <span data-i18n="shop">Магазин</span>
+                        <span data-i18n="shop">РњР°РіР°Р·РёРЅ</span>
                     </button>
                     <button class="hub-item battle-mode" id="open-battle">
                         <i data-lucide="swords"></i>
-                        <span data-i18n="battle">Битва</span>
+                        <span data-i18n="battle">Р‘РёС‚РІР°</span>
                         <div class="online-dot"></div>
                     </button>
                     <button class="hub-item stats-item" id="open-stats">
                         <i data-lucide="bar-chart-3"></i>
-                        <span data-i18n="stats">Инфо</span>
+                        <span data-i18n="stats">РРЅС„Рѕ</span>
                     </button>
                     <button class="hub-item" id="open-missions" style="border: 1px solid var(--accent); background: var(--accent-glow);">
                         <i data-lucide="list-checks" style="color: var(--accent);"></i>
-                        <span data-i18n="missions">Задания</span>
+                        <span data-i18n="missions">Р—Р°РґР°РЅРёСЏ</span>
                         <div id="mission-badge" style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; display: none;"></div>
                     </button>
                     <button class="hub-item" id="open-gallery" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none;">
                         <i data-lucide="image"></i>
-                        <span data-i18n="gallery">Галерея</span>
+                        <span data-i18n="gallery">Р“Р°Р»РµСЂРµСЏ</span>
                     </button>
                 </main>
                 </div>
@@ -102,7 +102,7 @@
                 <header class="game-header-bar">
                     <button class="icon-btn-blur" id="back-to-menu"><i data-lucide="chevron-left"></i></button>
                     <div class="puzzle-header">
-                        <h2 id="level-title">Уровень 1</h2>
+                        <h2 id="level-title">РЈСЂРѕРІРµРЅСЊ 1</h2>
                         <div class="difficulty-tag" id="difficulty-tag">EASY</div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -117,7 +117,7 @@
                 <!-- Opponent Progress (Hidden by default, shown in Battle) -->
                 <div id="opponent-progress-container" style="display: none; padding: 0 20px; margin-top: -10px; margin-bottom: 10px;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: bold; color: #ff4757; margin-bottom: 4px;">
-                        <span data-i18n="opponent">ПРОТИВНИК</span>
+                        <span data-i18n="opponent">РџР РћРўРР’РќРРљ</span>
                         <span id="opponent-progress-text">0%</span>
                     </div>
                     <div style="width: 100%; height: 6px; background: rgba(255, 71, 87, 0.2); border-radius: 3px; position: relative;">
@@ -140,7 +140,7 @@
                 <div class="action-bar">
                     <button class="action-btn hint" id="hint-btn">
                         <i data-lucide="wand-2"></i>
-                        <span data-i18n="hint">Подсказка (0)</span>
+                        <span data-i18n="hint">РџРѕРґСЃРєР°Р·РєР° (0)</span>
                     </button>
                     <button class="action-btn freeze" id="freeze-btn">
                         <i data-lucide="snowflake"></i>
@@ -158,20 +158,20 @@
         <div id="modal-container" class="modal-overlay hidden">
             <!-- Pause Modal -->
             <div id="pause-modal" class="modal-content hidden" style="text-align: center;">
-                <h2 style="margin-bottom: 20px;" data-i18n="paused">ПАУЗА</h2>
-                <div style="font-size: 4rem; margin-bottom: 30px;">⏸️</div>
+                <h2 style="margin-bottom: 20px;" data-i18n="paused">РџРђРЈР—Рђ</h2>
+                <div style="font-size: 4rem; margin-bottom: 30px;">вЏёпёЏ</div>
                 <button class="claim-btn-large" id="resume-game-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--accent); color:#000; font-weight:900; font-size:1.2rem; cursor:pointer; box-shadow: 0 0 15px var(--accent-glow);">
-                    <span data-i18n="resume">ПРОДОЛЖИТЬ</span>
+                    <span data-i18n="resume">РџР РћР”РћР›Р–РРўР¬</span>
                 </button>
                 <button class="btn-close-modal" id="pause-to-menu-btn" style="margin-top: 15px; background: none; border: none; color: var(--text-dim); text-decoration: underline; font-weight: bold; cursor: pointer;">
-                    <span data-i18n="to_menu">В главное меню</span>
+                    <span data-i18n="to_menu">Р’ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ</span>
                 </button>
             </div>
 
             <!-- Gallery Modal -->
             <div id="gallery-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="gallery">Галерея артов</h2>
+                    <h2 data-i18n="gallery">Р“Р°Р»РµСЂРµСЏ Р°СЂС‚РѕРІ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-bottom: 40px;"></div>
@@ -180,62 +180,62 @@
             <!-- Missions Modal -->
             <div id="missions-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="missions">Задания</h2>
+                    <h2 data-i18n="missions">Р—Р°РґР°РЅРёСЏ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
-                <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;" data-i18n="missions_desc">Выполняй задачи и получай монеты!</p>
+                <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;" data-i18n="missions_desc">Р’С‹РїРѕР»РЅСЏР№ Р·Р°РґР°С‡Рё Рё РїРѕР»СѓС‡Р°Р№ РјРѕРЅРµС‚С‹!</p>
                 <div id="missions-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
             </div>
 
             <!-- Battle Lobby Modal -->
             <div id="battle-lobby-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="battle_lobby">Режим Битвы</h2>
+                    <h2 data-i18n="battle_lobby">Р РµР¶РёРј Р‘РёС‚РІС‹</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
                     <div style="background: var(--card-onyx); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; text-align: center;">
                         <i data-lucide="bot" style="width: 48px; height: 48px; color: var(--accent); margin-bottom: 10px;"></i>
-                        <h3 data-i18n="vs_bot" style="margin: 0 0 15px 0;">Играть с Ботом</h3>
-                        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px;" data-i18n="vs_bot_desc">Тренируйся и зарабатывай монеты</p>
+                        <h3 data-i18n="vs_bot" style="margin: 0 0 15px 0;">РРіСЂР°С‚СЊ СЃ Р‘РѕС‚РѕРј</h3>
+                        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px;" data-i18n="vs_bot_desc">РўСЂРµРЅРёСЂСѓР№СЃСЏ Рё Р·Р°СЂР°Р±Р°С‚С‹РІР°Р№ РјРѕРЅРµС‚С‹</p>
                         
                         <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
                             <button class="bot-btn" data-diff="easy" data-stake="20" style="padding: 12px; border-radius: 12px; border: 1px solid var(--success-color); background: rgba(0,255,136,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
-                                <span data-i18n="bot_easy">Легкий Бот</span> (Ставка: 20 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
+                                <span data-i18n="bot_easy">Р›РµРіРєРёР№ Р‘РѕС‚</span> (РЎС‚Р°РІРєР°: 20 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
                             </button>
                             <button class="bot-btn" data-diff="medium" data-stake="50" style="padding: 12px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,242,255,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
-                                <span data-i18n="bot_med">Средний Бот</span> (Ставка: 50 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
+                                <span data-i18n="bot_med">РЎСЂРµРґРЅРёР№ Р‘РѕС‚</span> (РЎС‚Р°РІРєР°: 50 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
                             </button>
                             <button class="bot-btn" data-diff="hard" data-stake="100" style="padding: 12px; border-radius: 12px; border: 1px solid #ff4757; background: rgba(255,71,87,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
-                                <span data-i18n="bot_hard">Жесткий Бот</span> (Ставка: 100 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
+                                <span data-i18n="bot_hard">Р–РµСЃС‚РєРёР№ Р‘РѕС‚</span> (РЎС‚Р°РІРєР°: 100 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i>)
                             </button>                        </div>
                     </div>
 
                     <div style="background: var(--card-onyx); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; text-align: center; opacity: 0.6;">
                         <i data-lucide="users" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 10px;"></i>
-                        <h3 data-i18n="vs_friend" style="margin: 0 0 10px 0;">Играть с Другом</h3>
-                        <p style="color: var(--text-dim); font-size: 0.85rem; margin: 0;">Мультиплеер скоро появится!</p>
+                        <h3 data-i18n="vs_friend" style="margin: 0 0 10px 0;">РРіСЂР°С‚СЊ СЃ Р”СЂСѓРіРѕРј</h3>
+                        <p style="color: var(--text-dim); font-size: 0.85rem; margin: 0;">РњСѓР»СЊС‚РёРїР»РµРµСЂ СЃРєРѕСЂРѕ РїРѕСЏРІРёС‚СЃСЏ!</p>
                     </div>
                 </div>
             </div>
 
             <!-- Battle Result Modal -->
             <div id="battle-result-modal" class="modal-content hidden" style="text-align: center;">
-                <h2 style="color:var(--success-color); font-size:2rem; margin-bottom: 10px;" data-i18n="battle_win">ВЫ ПОБЕДИЛИ!</h2>
-                <div style="font-size: 3rem; margin: 20px 0;">🏆</div>
-                <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"><span data-i18n="reward">Награда:</span> <span id="battle-reward" style="color:var(--gold);">100</span> 🪙</p>
+                <h2 style="color:var(--success-color); font-size:2rem; margin-bottom: 10px;" data-i18n="battle_win">Р’Р« РџРћР‘Р•Р”РР›Р!</h2>
+                <div style="font-size: 3rem; margin: 20px 0;">рџЏ†</div>
+                <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"><span data-i18n="reward">РќР°РіСЂР°РґР°:</span> <span id="battle-reward" style="color:var(--gold);">100</span> рџЄ™</p>
                 <button class="claim-btn-large btn-close-modal" id="claim-battle-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--accent); font-weight:bold; font-size:1.1rem; cursor:pointer;">
-                    <span data-i18n="close">ЗАКРЫТЬ</span>
+                    <span data-i18n="close">Р—РђРљР Р«РўР¬</span>
                 </button>
             </div>
 
             <!-- Battle Lost Modal -->
             <div id="battle-lost-modal" class="modal-content hidden" style="text-align: center;">
-                <h2 style="color:#ff4757; font-size:2rem; margin-bottom: 10px;" data-i18n="battle_lose">ВЫ ПРОИГРАЛИ</h2>
-                <div style="font-size: 3rem; margin: 20px 0;">💀</div>
-                <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; color: var(--text-dim);" data-i18n="bot_faster">Противник оказался быстрее!</p>
+                <h2 style="color:#ff4757; font-size:2rem; margin-bottom: 10px;" data-i18n="battle_lose">Р’Р« РџР РћРР“Р РђР›Р</h2>
+                <div style="font-size: 3rem; margin: 20px 0;">рџ’Ђ</div>
+                <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; color: var(--text-dim);" data-i18n="bot_faster">РџСЂРѕС‚РёРІРЅРёРє РѕРєР°Р·Р°Р»СЃСЏ Р±С‹СЃС‚СЂРµРµ!</p>
                 <button class="claim-btn-large btn-close-modal" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--card-onyx); color: var(--text); border: 1px solid var(--glass-border); font-weight:bold; font-size:1.1rem; cursor:pointer;">
-                    <span data-i18n="close">ЗАКРЫТЬ</span>
+                    <span data-i18n="close">Р—РђРљР Р«РўР¬</span>
                 </button>
             </div>
 
@@ -243,15 +243,15 @@
             <!-- Level Select Modal -->
             <div id="level-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="level_select">Выберите уровень</h2>
+                    <h2 data-i18n="level_select">Р’С‹Р±РµСЂРёС‚Рµ СѓСЂРѕРІРµРЅСЊ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 
                 <div class="diff-tabs" id="diff-tabs">
-                    <button class="diff-tab active" data-diff="easy" data-i18n="easy">ЛЕГКО</button>
-                    <button class="diff-tab" data-diff="medium" data-i18n="medium">СРЕДНЕ</button>
-                    <button class="diff-tab" data-diff="hard" data-i18n="hard">СЛОЖНО</button>
-                    <button class="diff-tab" data-diff="expert" data-i18n="expert">ЭКСПЕРТ</button>
+                    <button class="diff-tab active" data-diff="easy" data-i18n="easy">Р›Р•Р“РљРћ</button>
+                    <button class="diff-tab" data-diff="medium" data-i18n="medium">РЎР Р•Р”РќР•</button>
+                    <button class="diff-tab" data-diff="hard" data-i18n="hard">РЎР›РћР–РќРћ</button>
+                    <button class="diff-tab" data-diff="expert" data-i18n="expert">Р­РљРЎРџР•Р Рў</button>
                 </div>
 
                 <div class="level-map-grid" id="level-map-grid"></div>
@@ -259,53 +259,53 @@
 
             <!-- Win Level Modal -->
             <div id="win-modal" class="modal-content hidden" style="text-align: center;">
-                <div style="font-size: 4rem; margin-bottom: 10px;">🌟</div>
-                <h2 style="color:var(--accent); font-size:2rem; margin-bottom: 5px;" data-i18n="level_complete">УРОВЕНЬ ПРОЙДЕН!</h2>
-                <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: var(--gold);" id="win-reward-text">+15 🪙</p>
+                <div style="font-size: 4rem; margin-bottom: 10px;">рџЊџ</div>
+                <h2 style="color:var(--accent); font-size:2rem; margin-bottom: 5px;" data-i18n="level_complete">РЈР РћР’Р•РќР¬ РџР РћР™Р”Р•Рќ!</h2>
+                <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: var(--gold);" id="win-reward-text">+15 рџЄ™</p>
                 <button class="claim-btn-large" id="next-level-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--accent); color:#000; font-weight:900; font-size:1.2rem; cursor:pointer; box-shadow: 0 0 15px var(--accent-glow);">
-                    <span data-i18n="next_level">ДАЛЬШЕ</span> ➔
+                    <span data-i18n="next_level">Р”РђР›Р¬РЁР•</span> вћ”
                 </button>
                 <button class="btn-close-modal" id="win-to-menu-btn" style="margin-top: 15px; background: none; border: none; color: var(--text-dim); text-decoration: underline; font-weight: bold; cursor: pointer;">
-                    <span data-i18n="to_menu">В главное меню</span>
+                    <span data-i18n="to_menu">Р’ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ</span>
                 </button>
             </div>
 
             <!-- Rules Modal -->
             <div id="rules-modal" class="modal-content hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="rules_title">Правила игры</h2>
+                    <h2 data-i18n="rules_title">РџСЂР°РІРёР»Р° РёРіСЂС‹</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div class="rules-body" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-dim);">
-                    <p data-i18n="rules_text_1">1. <b>Цель:</b> Заполни пустые клетки цифрами от 1 до 9 так, чтобы все уравнения по горизонтали и вертикали стали верными.</p>
-                    <p data-i18n="rules_text_2">2. <b>Порядок действий:</b> Все вычисления производятся строго <b>слева направо</b> и <b>сверху вниз</b>. Приоритет умножения и деления игнорируется.</p>
-                    <p data-i18n="rules_text_3">3. <b>Подсказки:</b> Если застрял, используй Подсказку (открывает 1 клетку) или Кристалл (открывает 3 клетки).</p>
-                    <p data-i18n="rules_text_4">4. <b>Вызов дня:</b> Особый сложный уровень. Пройди его, чтобы получить много монет и редкий Кристалл!</p>
-                    <p data-i18n="rules_text_5">5. <b>Ежедневный бонус:</b> Заходи в игру каждый день и забирай бесплатные монеты в главном меню!</p>
+                    <p data-i18n="rules_text_1">1. <b>Р¦РµР»СЊ:</b> Р—Р°РїРѕР»РЅРё РїСѓСЃС‚С‹Рµ РєР»РµС‚РєРё С†РёС„СЂР°РјРё РѕС‚ 1 РґРѕ 9 С‚Р°Рє, С‡С‚РѕР±С‹ РІСЃРµ СѓСЂР°РІРЅРµРЅРёСЏ РїРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»Рё Рё РІРµСЂС‚РёРєР°Р»Рё СЃС‚Р°Р»Рё РІРµСЂРЅС‹РјРё.</p>
+                    <p data-i18n="rules_text_2">2. <b>РџРѕСЂСЏРґРѕРє РґРµР№СЃС‚РІРёР№:</b> Р’СЃРµ РІС‹С‡РёСЃР»РµРЅРёСЏ РїСЂРѕРёР·РІРѕРґСЏС‚СЃСЏ СЃС‚СЂРѕРіРѕ <b>СЃР»РµРІР° РЅР°РїСЂР°РІРѕ</b> Рё <b>СЃРІРµСЂС…Сѓ РІРЅРёР·</b>. РџСЂРёРѕСЂРёС‚РµС‚ СѓРјРЅРѕР¶РµРЅРёСЏ Рё РґРµР»РµРЅРёСЏ РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ.</p>
+                    <p data-i18n="rules_text_3">3. <b>РџРѕРґСЃРєР°Р·РєРё:</b> Р•СЃР»Рё Р·Р°СЃС‚СЂСЏР», РёСЃРїРѕР»СЊР·СѓР№ РџРѕРґСЃРєР°Р·РєСѓ (РѕС‚РєСЂС‹РІР°РµС‚ 1 РєР»РµС‚РєСѓ) РёР»Рё РљСЂРёСЃС‚Р°Р»Р» (РѕС‚РєСЂС‹РІР°РµС‚ 3 РєР»РµС‚РєРё).</p>
+                    <p data-i18n="rules_text_4">4. <b>Р’С‹Р·РѕРІ РґРЅСЏ:</b> РћСЃРѕР±С‹Р№ СЃР»РѕР¶РЅС‹Р№ СѓСЂРѕРІРµРЅСЊ. РџСЂРѕР№РґРё РµРіРѕ, С‡С‚РѕР±С‹ РїРѕР»СѓС‡РёС‚СЊ РјРЅРѕРіРѕ РјРѕРЅРµС‚ Рё СЂРµРґРєРёР№ РљСЂРёСЃС‚Р°Р»Р»!</p>
+                    <p data-i18n="rules_text_5">5. <b>Р•Р¶РµРґРЅРµРІРЅС‹Р№ Р±РѕРЅСѓСЃ:</b> Р—Р°С…РѕРґРё РІ РёРіСЂСѓ РєР°Р¶РґС‹Р№ РґРµРЅСЊ Рё Р·Р°Р±РёСЂР°Р№ Р±РµСЃРїР»Р°С‚РЅС‹Рµ РјРѕРЅРµС‚С‹ РІ РіР»Р°РІРЅРѕРј РјРµРЅСЋ!</p>
                 </div>
             </div>
 
             <!-- Stats Modal -->
             <div id="stats-modal" class="modal-content hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="stats">Инфо</h2>
+                    <h2 data-i18n="stats">РРЅС„Рѕ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div class="stats-body" style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
                     <div style="background: var(--card-onyx); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-dim);" data-i18n="player_rank">РАНГ ИГРОКА</span>
+                        <span style="color: var(--text-dim);" data-i18n="player_rank">Р РђРќР“ РР“Р РћРљРђ</span>
                         <span id="stats-level" style="font-weight: 900; color: var(--accent); font-size: 1.2rem;">1</span>
                     </div>
                     <div style="background: var(--card-onyx); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-dim);" data-i18n="stats_solved">Решено уровней</span>
+                        <span style="color: var(--text-dim);" data-i18n="stats_solved">Р РµС€РµРЅРѕ СѓСЂРѕРІРЅРµР№</span>
                         <span id="stats-solved" style="font-weight: 900; font-size: 1.2rem;">0</span>
                     </div>
                     <div style="background: var(--card-onyx); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-dim);" data-i18n="hint">ПОДСКАЗКА</span>
+                        <span style="color: var(--text-dim);" data-i18n="hint">РџРћР”РЎРљРђР—РљРђ</span>
                         <span id="stats-hints" style="font-weight: 900; font-size: 1.2rem;">0</span>
                     </div>
                     <div style="background: var(--card-onyx); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: var(--text-dim);" data-i18n="stats_crystals">Кристаллы</span>
+                        <span style="color: var(--text-dim);" data-i18n="stats_crystals">РљСЂРёСЃС‚Р°Р»Р»С‹</span>
                         <span id="stats-crystals" style="font-weight: 900; font-size: 1.2rem;">0</span>
                     </div>
                     <div id="stats-transactions"></div>
@@ -315,56 +315,56 @@
             <!-- Settings Modal -->
             <div id="settings-modal" class="modal-content hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="settings">Настройки</h2>
+                    <h2 data-i18n="settings">РќР°СЃС‚СЂРѕР№РєРё</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div class="setting-row">
-                    <span data-i18n="music">Музыка</span>
+                    <span data-i18n="music">РњСѓР·С‹РєР°</span>
                     <button class="icon-btn-blur" id="toggle-music-btn" style="width: 80px;">ON</button>
                 </div>
                 <div class="setting-row">
-                    <span data-i18n="sound">Звуки</span>
+                    <span data-i18n="sound">Р—РІСѓРєРё</span>
                     <button class="icon-btn-blur" id="toggle-sound-btn" style="width: 80px;">ON</button>
                 </div>
                 <div class="setting-row">
-                    <span data-i18n="language">Язык</span>
+                    <span data-i18n="language">РЇР·С‹Рє</span>
                     <div style="display: flex; gap: 8px;">
                         <button class="icon-btn-blur lang-btn" data-lang="ru" style="width: 44px; font-weight: bold;">RU</button>
                         <button class="icon-btn-blur lang-btn" data-lang="en" style="width: 44px; font-weight: bold;">EN</button>
                     </div>
                 </div>
                 <div class="setting-row">
-                    <span data-i18n="theme">Тема</span>
+                    <span data-i18n="theme">РўРµРјР°</span>
                     <div class="theme-switch" id="theme-selector" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:280px;">
                         <div class="theme-option" data-theme="onyx" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle active" data-theme="onyx" title="Onyx" style="background:#050505; width:36px; height:36px; border-radius:50%; border:2px solid transparent;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Оникс</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">РћРЅРёРєСЃ</span>
                         </div>
                         <div class="theme-option" data-theme="light" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="light" title="Light" style="background:#f8fafc; border:1px solid #ccc; width:36px; height:36px; border-radius:50%;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Светлая</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">РЎРІРµС‚Р»Р°СЏ</span>
                         </div>
                         <div class="theme-option" data-theme="amethyst" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="amethyst" title="Amethyst" style="background:#1a1a2e; width:36px; height:36px; border-radius:50%;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Аметист</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">РђРјРµС‚РёСЃС‚</span>
                         </div>
                         <div class="theme-option" data-theme="paper" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="paper" title="Paper" style="background:#fdf6e3; border:1px solid #d33682; width:36px; height:36px; border-radius:50%;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Бумага</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Р‘СѓРјР°РіР°</span>
                         </div>
                         <div class="theme-option" data-theme="telegram" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="telegram" title="Telegram" style="background:var(--tg-theme-button-color, #2481cc); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
                                 <i data-lucide="send" style="width:16px; color:#fff;"></i>
                             </div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Телеграм</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">РўРµР»РµРіСЂР°Рј</span>
                         </div>
                         <div class="theme-option" data-theme="starry" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="starry" title="Starry Night" style="background:linear-gradient(135deg, #0a0a1a, #1a1a3a); width:36px; height:36px; border-radius:50%;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Звёзды</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Р—РІС‘Р·РґС‹</span>
                         </div>
                         <div class="theme-option" data-theme="cyberpunk" style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
                             <div class="theme-circle" data-theme="cyberpunk" title="Cyberpunk" style="background:linear-gradient(135deg, #1a0a1a, #ff00ff); width:36px; height:36px; border-radius:50%;"></div>
-                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">Киберпанк</span>
+                            <span style="font-size:0.65rem; margin-top:2px; color:var(--text-dim);">РљРёР±РµСЂРїР°РЅРє</span>
                         </div>
                     </div>
                 </div>
@@ -373,7 +373,7 @@
             <!-- Leaderboard Modal -->
             <div id="leaderboard-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="ranking">Рейтинг</h2>
+                    <h2 data-i18n="ranking">Р РµР№С‚РёРЅРі</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div class="leader-list" id="leader-list"></div>
@@ -381,22 +381,22 @@
 
             <div id="shop-modal" class="modal-content full-modal hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="shop">Магазин</h2>
+                    <h2 data-i18n="shop">РњР°РіР°Р·РёРЅ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 
                 <div class="shop-tabs">
-                    <button class="shop-tab active" data-tab="boosters">БУСТЕРЫ</button>
-                    <button class="shop-tab" data-tab="themes">ТЕМЫ</button>
+                    <button class="shop-tab active" data-tab="boosters">Р‘РЈРЎРўР•Р Р«</button>
+                    <button class="shop-tab" data-tab="themes">РўР•РњР«</button>
                 </div>
 
                 <div id="shop-items-grid" class="shop-grid">
-                    <!-- Бустеры -->
+                    <!-- Р‘СѓСЃС‚РµСЂС‹ -->
                     <div class="shop-item" data-category="boosters">
                         <div class="item-icon hint-pack"><i data-lucide="wand-2"></i><span>x5</span></div>
                         <div class="item-info">
-                            <h3>Пак подсказок</h3>
-                            <p>5 быстрых решений</p>
+                            <h3>РџР°Рє РїРѕРґСЃРєР°Р·РѕРє</h3>
+                            <p>5 Р±С‹СЃС‚СЂС‹С… СЂРµС€РµРЅРёР№</p>
                         </div>
                         <button class="buy-btn" data-id="hint_5" data-price="80">80 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
@@ -404,8 +404,8 @@
                     <div class="shop-item" data-category="boosters">
                         <div class="item-icon crystal-pack"><i data-lucide="gem"></i><span>x3</span></div>
                         <div class="item-info">
-                            <h3>Пак кристаллов</h3>
-                            <p>3 супер-подсказки</p>
+                            <h3>РџР°Рє РєСЂРёСЃС‚Р°Р»Р»РѕРІ</h3>
+                            <p>3 СЃСѓРїРµСЂ-РїРѕРґСЃРєР°Р·РєРё</p>
                         </div>
                         <button class="buy-btn" data-id="crystal_3" data-price="150">150 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
@@ -413,18 +413,18 @@
                     <div class="shop-item" data-category="boosters">
                         <div class="item-icon freeze-pack"><i data-lucide="snowflake"></i></div>
                         <div class="item-info">
-                            <h3>Заморозка</h3>
-                            <p>Стоп таймер (15с)</p>
+                            <h3>Р—Р°РјРѕСЂРѕР·РєР°</h3>
+                            <p>РЎС‚РѕРї С‚Р°Р№РјРµСЂ (15СЃ)</p>
                         </div>
                         <button class="buy-btn" data-id="freeze" data-price="50">50 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
 
-                    <!-- Темы (скрыты по умолчанию) -->
+                    <!-- РўРµРјС‹ (СЃРєСЂС‹С‚С‹ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ) -->
                     <div class="shop-item hidden" data-category="themes">
                         <div class="item-icon theme-preview paper"><i data-lucide="palette"></i></div>
                         <div class="item-info">
-                            <h3>Тема: Бумага</h3>
-                            <p>Стиль тетради</p>
+                            <h3>РўРµРјР°: Р‘СѓРјР°РіР°</h3>
+                            <p>РЎС‚РёР»СЊ С‚РµС‚СЂР°РґРё</p>
                         </div>
                         <button class="buy-btn" data-id="theme_paper" data-price="500">500 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
@@ -432,24 +432,24 @@
                     <div class="shop-item hidden" data-category="themes">
                         <div class="item-icon theme-preview amethyst"><i data-lucide="palette"></i></div>
                         <div class="item-info">
-                            <h3>Тема: Аметист</h3>
-                            <p>Космический фиолетовый</p>
+                            <h3>РўРµРјР°: РђРјРµС‚РёСЃС‚</h3>
+                            <p>РљРѕСЃРјРёС‡РµСЃРєРёР№ С„РёРѕР»РµС‚РѕРІС‹Р№</p>
                         </div>
                         <button class="buy-btn" data-id="theme_amethyst" data-price="300">300 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
                     <div class="shop-item hidden" data-category="themes">
                         <div class="item-icon theme-preview" style="background:linear-gradient(135deg, #0a0a1a, #1a1a3a);"><i data-lucide="stars"></i></div>
                         <div class="item-info">
-                            <h3>Тема: Звёзды</h3>
-                            <p>Мерцающее ночное небо</p>
+                            <h3>РўРµРјР°: Р—РІС‘Р·РґС‹</h3>
+                            <p>РњРµСЂС†Р°СЋС‰РµРµ РЅРѕС‡РЅРѕРµ РЅРµР±Рѕ</p>
                         </div>
                         <button class="buy-btn" data-id="theme_starry" data-price="500">500 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
                     <div class="shop-item hidden" data-category="themes">
                         <div class="item-icon theme-preview" style="background:linear-gradient(135deg, #1a0a1a, #ff00ff);"><i data-lucide="zap"></i></div>
                         <div class="item-info">
-                            <h3>Тема: Киберпанк</h3>
-                            <p>Неон и глитч-эффекты</p>
+                            <h3>РўРµРјР°: РљРёР±РµСЂРїР°РЅРє</h3>
+                            <p>РќРµРѕРЅ Рё РіР»РёС‚С‡-СЌС„С„РµРєС‚С‹</p>
                         </div>
                         <button class="buy-btn" data-id="theme_cyberpunk" data-price="800">800 <i data-lucide="coins" style="width:14px; height:14px; vertical-align:middle;"></i></button>
                     </div>
@@ -459,20 +459,20 @@
             <!-- Daily Bonus Modal -->
             <div id="bonus-modal" class="modal-content hidden">
                 <header class="modal-head">
-                    <h2 data-i18n="daily_reward">Ежедневный Бонус</h2>
+                    <h2 data-i18n="daily_reward">Р•Р¶РµРґРЅРµРІРЅС‹Р№ Р‘РѕРЅСѓСЃ</h2>
                     <button class="btn-close-modal"><i data-lucide="x"></i></button>
                 </header>
                 <div id="streak-display" style="text-align:center; margin-bottom:15px; font-size:1.2rem; color:var(--gold);"></div>
                 <div class="streak-track" id="streak-track" style="display:flex; gap:5px; margin:20px 0;"></div>
                 <button class="claim-btn-large" id="claim-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--accent); font-weight:bold; font-size:1.1rem; cursor:pointer;">
-                    <span data-i18n="claim">ПОЛУЧИТЬ</span> <span id="reward-amount">50</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>
+                    <span data-i18n="claim">РџРћР›РЈР§РРўР¬</span> <span id="reward-amount">50</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>
                 </button>
             </div>
 
         </div>
     </div>
-    <script src="js/generator.js?v=6.0"></script>
-    <script src="js/audio.js?v=6.0"></script>
-    <script src="js/game.js?v=6.0"></script>
+    <script src="js/generator.js?v=7.1"></script>
+    <script src="js/audio.js?v=7.1"></script>
+    <script src="js/game.js?v=7.1"></script>
 </body>
 </html>

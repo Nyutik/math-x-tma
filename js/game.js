@@ -172,8 +172,10 @@ function updateUI() {
     if (hubHints) hubHints.textContent = state.inventory.hints;
     const hubFreezes = document.getElementById('hub-freezes');
     if (hubFreezes) hubFreezes.textContent = state.inventory.freezes;
-    const hubCrystals = document.getElementById('hub-crystals');
-    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;`n    const gameCrystals = document.getElementById('crystal-count');`n    if (gameCrystals) gameCrystals.textContent = state.inventory.crystals;
+    const hubCrystals = document.getElementById("hub-crystals");
+    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;
+    const gameCrystals = document.getElementById("crystal-count");
+    if (gameCrystals) gameCrystals.textContent = state.inventory.crystals;
     
     const userLv = document.getElementById('user-level-tag');
     if (userLv) userLv.textContent = `${state.lang === 'ru' ? 'УР.' : 'LVL.'} ${state.level}`;
@@ -1398,10 +1400,33 @@ async function renderLeaderboard() {
 }
 
 async function renderGallery() {
-    const grid = document.getElementById('gallery-grid');
+    const grid = document.getElementById("gallery-grid");
     if (!grid) return;
     const ART_COLLECTION = [
         { id: 1, name: "Neon", url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=600", levels_required: 5 },
+        { id: 2, name: "Math", url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600", levels_required: 15 }
+    ];
+    const s = await ServerAPI.getStats();
+    const solved = s?.total_solved || state.stats.totalSolved;
+    grid.innerHTML = ART_COLLECTION.map(art => {
+        const isUnlocked = solved >= art.levels_required;
+        return `<div class="art-card" style="position:relative; aspect-ratio:1; border-radius:20px; overflow:hidden; background:var(--card-onyx); border:1px solid var(--glass-border);">
+            <img src="${art.url}" style="width:100%; height:100%; object-fit:cover; filter:${isUnlocked ? "none" : "blur(15px)"}; opacity:${isUnlocked ? "1" : "0.4"};">
+            ${isUnlocked ? `
+                <div class="art-actions" style="position:absolute; bottom:10px; right:10px; display:flex; gap:8px;">
+                    <a href="${art.url}" target="_blank" class="icon-btn-blur" style="width:32px; height:32px; background:rgba(0,0,0,0.6); color:#fff; text-decoration:none; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+                        <i data-lucide="download" style="width:16px; height:16px;"></i>
+                    </a>
+                </div>
+            ` : `
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);">
+                    <i data-lucide="lock" style="color:var(--gold); margin-bottom:5px;"></i><span style="font-size:0.7rem; font-weight:bold;">${solved}/${art.levels_required}</span>
+                </div>
+            `}
+        </div>`;
+    }).join("");
+    if (window.lucide) lucide.createIcons();
+},
         { id: 2, name: "Math", url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600", levels_required: 15 }
     ];
     const s = await ServerAPI.getStats();
@@ -1466,6 +1491,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

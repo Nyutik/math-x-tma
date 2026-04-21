@@ -460,7 +460,7 @@ function initApp() {
 
     safeSetClick('invite-btn', () => {
         const inviteText = encodeURIComponent(state.lang === 'ru' ? "Спорим, не решишь эту математическую головоломку? Присоединяйся!" : "Bet you can't solve this math puzzle! Join now!");
-        const botUrl = encodeURIComponent("https://t.me/MathX_Bot");
+        const botUrl = encodeURIComponent("https://t.me/mathx_infinity_bot");
         const tgLink = `https://t.me/share/url?url=${botUrl}&text=${inviteText}`;
         if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
         else window.open(tgLink, '_blank');

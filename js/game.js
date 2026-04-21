@@ -659,15 +659,13 @@ function initApp() {
     const duelInviteBtn = document.querySelectorAll('.duel-invite-btn');
     duelInviteBtn.forEach(btn => {
         btn.onclick = () => {
-            console.log('Duel button clicked');
             const stake = parseInt(btn.dataset.stake);
             if (state.coins < stake) { Haptics.error(); return showToast(state.lang === 'ru' ? 'Недостаточно монет!' : 'Not enough coins!'); }
             
             const roomId = Math.random().toString(36).substring(2, 10);
             const diff = state.currentDiffTab || 'easy';
-            // Use standard bot link with start parameter instead of direct startapp link
-            const botUser = "mathx_infinity_bot";
-            const duelLink = `https://t.me/${botUser}?start=duel_${roomId}_${diff}_${stake}`;
+            // IMPORTANT: Format for Mini App with short_name 'app'
+            const duelLink = `https://t.me/mathx_infinity_bot/app?startapp=duel_${roomId}_${diff}_${stake}`;
             const inviteText = encodeURIComponent(state.lang === 'ru' ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.` : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`);
             const tgLink = `https://t.me/share/url?url=${encodeURIComponent(duelLink)}&text=${inviteText}`;
             

@@ -398,6 +398,8 @@ function updateUI() {
         circle.classList.toggle('active', theme === state.theme);
         circle.title = I18N[state.lang][`theme_${theme}`] || theme;
     });
+
+    if (window.lucide) lucide.createIcons();
 }
 
 function saveData() {

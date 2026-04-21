@@ -28,6 +28,9 @@ const I18N = {
         pack_freeze: "Заморозка", pack_freeze_desc: "Стоп таймер (15с)",
         theme_paper_desc: "Стиль тетради", theme_amethyst_desc: "Космический фиолетовый",
         theme_starry_desc: "Мерцающее ночное небо", theme_cyberpunk_desc: "Неон и глитч-эффекты",
+        theme_matrix: "Матрица", theme_matrix_desc: "Хакерский зеленый код",
+        theme_sunset: "Закат", theme_sunset_desc: "Теплый летний вечер",
+        theme_neon: "Неон", theme_neon_desc: "Кислотные цвета будущего",
         level_select: "Выберите уровень", level_complete: "УРОВЕНЬ ПРОЙДЕН!", close: "ЗАКРЫТЬ",
         daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> и Кристалл", battle_lobby: "Режим Битвы", player_name: "Игрок"
     },
@@ -75,7 +78,7 @@ let state = {
     unlockedExpert: parseInt(localStorage.getItem('mx_unlocked_expert') || '1'),
     streak: parseInt(localStorage.getItem('mx_streak') || '0'),
     dailyCompleted: localStorage.getItem('mx_daily_completed') === 'true',
-    inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram","starry","cyberpunk"]}'),
+    inventory: JSON.parse(localStorage.getItem('mx_inv') || '{"hints":3,"freezes":0,"crystals":0,"themes":["onyx","light","telegram"]}'),
     lastDaily: localStorage.getItem('mx_last_daily') || '',
     lastBonus: localStorage.getItem('mx_last_bonus') || '',
     lastMissionsReset: localStorage.getItem('mx_last_missions') || '',

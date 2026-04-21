@@ -116,6 +116,42 @@
     animation: glitch-scan 10s linear infinite;
 }
 
+.theme-matrix {
+    --bg-onyx: #000000;
+    --card-onyx: #0a110a;
+    --accent: #00ff00;
+    --accent-glow: rgba(0, 255, 0, 0.4);
+    --text: #00ff00;
+    --text-dim: #008800;
+    --glass: rgba(0, 255, 0, 0.1);
+    --glass-border: rgba(0, 255, 0, 0.3);
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.theme-sunset {
+    --bg-onyx: #2a0800;
+    --card-onyx: #3a1500;
+    --accent: #ff8c00;
+    --accent-glow: rgba(255, 140, 0, 0.4);
+    --text: #ffebb5;
+    --text-dim: #d4a373;
+    --glass: rgba(255, 140, 0, 0.1);
+    --glass-border: rgba(255, 140, 0, 0.3);
+    background: linear-gradient(180deg, #1a0500 0%, #2a0800 50%, #4a1500 100%);
+}
+
+.theme-neon {
+    --bg-onyx: #020024;
+    --card-onyx: #090979;
+    --accent: #00d4ff;
+    --accent-glow: rgba(0, 212, 255, 0.5);
+    --text: #ffffff;
+    --text-dim: #00d4ff;
+    --glass: rgba(0, 212, 255, 0.1);
+    --glass-border: rgba(0, 212, 255, 0.4);
+    background: linear-gradient(135deg, #020024 0%, #090979 50%, #00d4ff 100%);
+}
+
 @keyframes glitch-scan {
     0% { transform: translateY(0); }
     100% { transform: translateY(100%); }

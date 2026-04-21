@@ -334,9 +334,8 @@ function updateUI() {
         } else {
             dailyTitle.textContent = I18N[state.lang].daily_level;
             dailySubtitle.style.textAlign = 'left';
-            dailySubtitle.innerHTML = `+200 <i data-lucide="coins" style="width:14px; height:14px;"></i> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
+            dailySubtitle.innerHTML = `+200 <span style="color:var(--gold);">🪙</span> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
         }
-        if (window.lucide) lucide.createIcons();
     }
 
     const streakTextEl = document.getElementById('streak-text');
@@ -386,7 +385,6 @@ function updateUI() {
             modalClaimBtn.innerHTML = state.lang === 'ru' ? 'ПОЛУЧЕНО' : 'CLAIMED';
         } else {
             modalClaimBtn.innerHTML = `<span data-i18n="claim">${I18N[state.lang].claim}</span> <span id="reward-amount">50</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>`;
-            if (window.lucide) lucide.createIcons();
         }
     }
 
@@ -398,10 +396,9 @@ function updateUI() {
         circle.classList.toggle('active', theme === state.theme);
         circle.title = I18N[state.lang][`theme_${theme}`] || theme;
     });
-
-    if (window.lucide) lucide.createIcons();
 }
 
+let saveTimeout = null;
 function saveData() {
     localStorage.setItem('mx_coins', state.coins);
     localStorage.setItem('mx_xp', state.xp);
@@ -420,7 +417,12 @@ function saveData() {
     localStorage.setItem('mx_stats', JSON.stringify(state.stats));
     localStorage.setItem('mx_transactions', JSON.stringify(state.transactions));
     localStorage.setItem('mx_active_session', JSON.stringify(state.activeSession));
-    ServerAPI.sync();
+    
+    // Debounce server sync
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        ServerAPI.sync();
+    }, 1000);
 }
 
 // Transaction tracking helper

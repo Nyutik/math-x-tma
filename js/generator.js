@@ -29,23 +29,23 @@
             let operators = difficulty === 'easy' ? ['+', '-'] : (difficulty === 'medium' ? ['+', '-', '*'] : ['+', '-', '*', '/']);
 
             let attempts = 0;
-            while (attempts < 100) {
+            while (attempts < 200) {
                 attempts++;
                 const grid = Array(size).fill().map(() => Array(size).fill(''));
                 const values = {};
                 
                 // 1. Генерируем числа
-                for (let r = 0; r < size - 1; r += 2) {
-                    for (let c = 0; c < size - 1; c += 2) {
+                for (let r = 0; r < size; r += 2) {
+                    for (let c = 0; c < size; c += 2) {
                         values[`${r}-${c}`] = rng.randomInt(1, 9);
                     }
                 }
 
                 let isValid = true;
                 // 2. Горизонтали
-                for (let r = 0; r < size - 1; r += 2) {
+                for (let r = 0; r < size; r += 2) {
                     let res = values[`${r}-0`];
-                    for (let c = 1; c < size - 2; c += 2) {
+                    for (let c = 1; c < size - 1; c += 2) {
                         let op = operators[rng.randomInt(0, operators.length - 1)];
                         let next = values[`${r}-${c+1}`];
                         if (op === '/' && res % next !== 0) op = '+';
@@ -60,9 +60,9 @@
                 if (!isValid) continue;
 
                 // 3. Вертикали
-                for (let c = 0; c < size - 1; c += 2) {
+                for (let c = 0; c < size; c += 2) {
                     let res = values[`0-${c}`];
-                    for (let r = 1; r < size - 2; r += 2) {
+                    for (let r = 1; r < size - 1; r += 2) {
                         let op = operators[rng.randomInt(0, operators.length - 1)];
                         let next = values[`${r+1}-${c}`];
                         if (op === '/' && res % next !== 0) op = '+';
@@ -79,7 +79,7 @@
                 // 4. Скрытие ячеек
                 const answers = {};
                 const fixedCells = {};
-                const targetHidden = difficulty === 'easy' ? 3 : (difficulty === 'medium' ? 7 : 12);
+                const targetHidden = difficulty === 'easy' ? 3 : (difficulty === 'medium' ? 7 : (difficulty === 'hard' ? 12 : 20));
                 
                 let cells = [];
                 for (let r = 0; r < size - 1; r += 2) {
@@ -114,7 +114,7 @@
 
                 return { grid, answers, fixedCells, difficulty, size };
             }
-            return this.generateFallback(difficulty);
+            return this.generateFallback(difficulty, size);
         },
 
         generateDaily(dateStr) {
@@ -122,9 +122,27 @@
             return this.generateLevel('hard', seed);
         },
 
-        generateFallback(diff) {
-            const grid = [['1','+','','=','3'],['+','','+','',''],['','+','2','=','6'],['=','','=','',''],['5','','4','','']];
-            return { grid, answers: {'0-2':'2','2-0':'4'}, fixedCells: {'0-0':true,'0-1':true,'0-3':true,'0-4':true}, difficulty: diff, size: 5 };
+        generateFallback(diff, size) {
+            const grid = Array(size).fill().map(() => Array(size).fill(''));
+            const answers = {};
+            const fixedCells = {};
+            for(let r=0; r<size; r+=2) {
+                for(let c=0; c<size; c+=2) {
+                    if (c < size-2) {
+                        grid[r][c] = '1'; grid[r][c+1] = '+'; 
+                        fixedCells[`${r}-${c}`] = true; fixedCells[`${r}-${c+1}`] = true;
+                    } else {
+                        grid[r][c] = String((size-1)/2); // Simplified horizontal sum
+                        fixedCells[`${r}-${c}`] = true;
+                    }
+                    if (c === 0 && r < size-1) {
+                         grid[r+1][c] = '+'; fixedCells[`${r+1}-${c}`] = true;
+                    }
+                }
+                if (r < size-2) grid[r][size-2] = '=';
+            }
+            // Just a dummy valid-ish grid for emergency
+            return { grid, answers: {}, fixedCells, difficulty: diff, size };
         }
     };
     window.LevelGenerator = LevelGenerator;

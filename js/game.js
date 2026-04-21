@@ -1455,22 +1455,46 @@ async function renderGallery() {
     const grid = document.getElementById('gallery-grid');
     if (!grid) return;
     const ART_COLLECTION = [
-        { id: 1, name: "Neon", url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=600", levels_required: 5 },
-        { id: 2, name: "Math", url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600", levels_required: 15 }
+        { id: 1, name: "Neon", url: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=600", levels_start: 0, pieces: 9 },
+        { id: 2, name: "Math", url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600", levels_start: 9, pieces: 16 },
+        { id: 3, name: "Cyber", url: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=600", levels_start: 25, pieces: 25 }
     ];
     const s = await ServerAPI.getStats();
     const solved = s?.total_solved || state.stats.totalSolved;
     grid.innerHTML = ART_COLLECTION.map(art => {
-        const isUnlocked = solved >= art.levels_required;
-        return `<div class="art-card" style="position:relative; aspect-ratio:1; border-radius:20px; overflow:hidden; background:var(--card-onyx); border:1px solid var(--glass-border);">
-            <img src="${art.url}" style="width:100%; height:100%; object-fit:cover; filter:${isUnlocked ? 'none' : 'blur(15px)'}; opacity:${isUnlocked ? '1' : '0.4'};">
-            ${!isUnlocked ? `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.5);">
-                <i data-lucide="lock" style="color:var(--gold); margin-bottom:5px;"></i><span style="font-size:0.7rem;">${solved}/${art.levels_required}</span>
-            </div>` : ''}
+        const unlockedPieces = Math.max(0, Math.min(art.pieces, solved - art.levels_start));
+        const isUnlocked = unlockedPieces === art.pieces;
+        
+        const cols = Math.sqrt(art.pieces); // 3x3, 4x4, 5x5
+        let puzzleHtml = '';
+        for (let i = 0; i < art.pieces; i++) {
+            const isPieceUnlocked = i < unlockedPieces;
+            puzzleHtml += `<div style="background: ${isPieceUnlocked ? 'transparent' : 'rgba(10,10,10,0.95)'}; border: 1px solid rgba(255,255,255,0.1);"></div>`;
+        }
+
+        return `<div class="art-card" onclick="window.viewArt('${art.url}', ${isUnlocked})" style="position:relative; aspect-ratio:1; border-radius:20px; overflow:hidden; background:var(--card-onyx); border:1px solid var(--glass-border); cursor:${isUnlocked ? 'pointer' : 'default'};">
+            <img src="${art.url}" style="position:absolute; width:100%; height:100%; object-fit:cover; filter:${isUnlocked ? 'none' : 'blur(2px)'};">
+            <div style="position:absolute; inset:0; display:grid; grid-template-columns: repeat(${cols}, 1fr); grid-template-rows: repeat(${cols}, 1fr);">
+                ${puzzleHtml}
+            </div>
+            ${!isUnlocked ? `<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); pointer-events:none;">
+                <span style="font-size:1.5rem; font-weight:bold; color:#fff; text-shadow:0 0 10px #000;">${unlockedPieces}/${art.pieces}</span>
+            </div>` : `<div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); padding:5px; border-radius:50%; display:flex;"><i data-lucide="maximize-2" style="color:#fff; width:16px; height:16px;"></i></div>`}
         </div>`;
     }).join('');
     if (window.lucide) lucide.createIcons();
 }
+
+window.viewArt = function(url, isUnlocked) {
+    if (!isUnlocked) return;
+    Haptics.medium();
+    const viewer = document.getElementById('art-viewer-modal');
+    const img = document.getElementById('art-viewer-img');
+    if (viewer && img) {
+        img.src = url;
+        viewer.classList.remove('hidden');
+    }
+};
 
 function renderLevelMap() {
     const map = document.getElementById('level-map-grid');

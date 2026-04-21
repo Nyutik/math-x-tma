@@ -298,6 +298,44 @@ function addTransaction(type, category, amount) {
     state.transactions[type][category][today] += amount;
 }
 
+
+const HolidayEngine = {
+    holidays: [
+        { id: 'may_1', name: '¦ßTÀ¦-¦¬¦+¦-¦¬¦¦ ¦-¦¦TÁ¦-TË', date: '2026-05-01', reward: 500 },
+        { id: 'may_9', name: '¦Ô¦¦¦-TÌ ¦ß¦-¦-¦¦¦+TË', date: '2026-05-09', reward: 1000 }
+    ],
+    check() {
+        const now = new Date();
+        const hubBonus = document.getElementById('hub-holiday-bonus');
+        if (!hubBonus) return;
+
+        this.holidays.forEach(h => {
+            const hDate = new Date(h.date);
+            const diffDays = Math.ceil((hDate - now) / (1000 * 60 * 60 * 24));
+
+            if (diffDays <= 7 && diffDays > 0) {
+                hubBonus.classList.remove('hidden');
+                hubBonus.innerHTML = TÀTßòÀØTÕ \ \ \ \;
+            } else if (diffDays === 0) {
+                hubBonus.classList.remove('hidden');
+                hubBonus.innerHTML = TÀTßòÀÝòÄÖ \! \;
+                hubBonus.onclick = () => this.claim(h);
+            }
+        });
+    },
+    claim(h) {
+        const claimed = JSON.parse(localStorage.getItem('mx_claimed_holidays') || '[]');
+        if (claimed.includes(h.id)) return alert(state.lang === 'ru' ? '¦ã¦¦¦¦ ¦¬¦-¦¬TÃTÇ¦¦¦-¦-!' : 'Already claimed!');
+        
+        state.coins += h.reward;
+        claimed.push(h.id);
+        localStorage.setItem('mx_claimed_holidays', JSON.stringify(claimed));
+        updateUI();
+        alert(\: +\ TÀTß¦ÄòÄâ);
+        ServerAPI.sync();
+    }
+};
+
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
     
@@ -305,14 +343,14 @@ window.onload = async () => {
     if (serverData?.user) {
         state.coins = serverData.user.coins;
         state.xp = serverData.user.xp;
-        state.level = serverData.user.level;`n        if (serverData.user.theme) state.theme = serverData.user.theme;`n        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
+        state.level = serverData.user.level;        if (serverData.user.theme) state.theme = serverData.user.theme;        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
     }
 
     applyLanguage();
     applyTheme(state.theme);
     updateUI();
     initApp();
-    updateUI(); initShop();
+    updateUI(); initShop(); HolidayEngine.check();
 };
 
 function safeSetClick(id, fn) { 
@@ -1372,6 +1410,7 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 
 

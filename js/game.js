@@ -398,16 +398,6 @@ function updateUI() {
         circle.classList.toggle('active', theme === state.theme);
         circle.title = I18N[state.lang][`theme_${theme}`] || theme;
     });
-    
-    // Add click handlers for theme options
-    document.querySelectorAll('.theme-option').forEach(option => {
-        option.onclick = function() {
-            const theme = this.dataset.theme;
-            if (state.inventory.themes.includes(theme)) {
-                applyTheme(theme);
-            }
-        };
-    });
 }
 
 function saveData() {
@@ -652,8 +642,37 @@ function initApp() {
         };
     });
 
-    document.querySelectorAll('.theme-circle').forEach(btn => {
-        btn.onclick = () => { Haptics.medium(); applyTheme(btn.dataset.theme); };
+    document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.onclick = () => { 
+            Haptics.medium(); 
+            const theme = btn.dataset.theme;
+            if (state.inventory.themes.includes(theme)) {
+                applyTheme(theme); 
+            }
+        };
+    });
+
+    // Duel invite button
+    document.querySelectorAll('.duel-invite-btn').forEach(btn => {
+        btn.onclick = () => {
+            const stake = parseInt(btn.dataset.stake);
+            if (state.coins < stake) { Haptics.error(); return showToast(state.lang === 'ru' ? 'Недостаточно монет!' : 'Not enough coins!'); }
+            
+            const roomId = Math.random().toString(36).substring(2, 10);
+            const diff = state.currentDiffTab || 'easy';
+            const duelLink = `https://t.me/mathx_infinity_bot/start?startapp=duel_${roomId}_${diff}_${stake}`;
+            const inviteText = encodeURIComponent(state.lang === 'ru' ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.` : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`);
+            const tgLink = `https://t.me/share/url?url=${encodeURIComponent(duelLink)}&text=${inviteText}`;
+            
+            state.coins -= stake;
+            state.battleStake = stake;
+            state.battleBotDiff = null; // Real PvP
+            PVPClient.joinRoom(roomId, diff);
+            
+            if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
+            else window.open(tgLink, '_blank');
+            saveData(); updateUI();
+        };
     });
 
     document.querySelectorAll('.lang-btn').forEach(btn => {

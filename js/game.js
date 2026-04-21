@@ -1366,3 +1366,4 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+

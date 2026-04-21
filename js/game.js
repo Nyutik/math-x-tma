@@ -299,58 +299,87 @@ function addTransaction(type, category, amount) {
 }
 
 
+
+
+
 const HolidayEngine = {
     holidays: [
-        { id: 'may_1', name: '¦ßTÀ¦-¦¬¦+¦-¦¬¦¦ ¦-¦¦TÁ¦-TË', date: '2026-05-01', reward: 500 },
-        { id: 'may_9', name: '¦Ô¦¦¦-TÌ ¦ß¦-¦-¦¦¦+TË', date: '2026-05-09', reward: 1000 }
+        { id: 'may_1', name: '¦ßTÀ¦-¦¬¦+¦-¦¬¦¦ ¦-¦¦TÁ¦-TË', date: '2026-05-01', reward: 1000, art_id: 101 },
+        { id: 'may_9', name: '¦Ô¦¦¦-TÌ ¦ß¦-¦-¦¦¦+TË', date: '2026-05-09', reward: 2000, art_id: 102 }
     ],
     check() {
         const now = new Date();
         const hubBonus = document.getElementById('hub-holiday-bonus');
         if (!hubBonus) return;
 
+        let activeHoliday = null;
         this.holidays.forEach(h => {
             const hDate = new Date(h.date);
             const diffDays = Math.ceil((hDate - now) / (1000 * 60 * 60 * 24));
 
             if (diffDays <= 7 && diffDays > 0) {
                 hubBonus.classList.remove('hidden');
-                hubBonus.innerHTML = TÀTßòÀØTÕ \ \ \ \;
+                hubBonus.innerHTML = 'òÏ- ' + h.name + ' ' + (state.lang === 'ru' ? 'TÇ¦¦TÀ¦¦¦¬' : 'in') + ' ' + diffDays + ' ' + (state.lang === 'ru' ? '¦+¦-.' : 'd.');
+                hubBonus.onclick = null;
             } else if (diffDays === 0) {
+                activeHoliday = h;
                 hubBonus.classList.remove('hidden');
-                hubBonus.innerHTML = TÀTßòÀÝòÄÖ \! \;
-                hubBonus.onclick = () => this.claim(h);
+                hubBonus.style.background = 'linear-gradient(90deg, #8b5cf6, #d946ef)';
+                hubBonus.innerHTML = 'TÀTßòÀÝòÄÖ ' + h.name + '! ' + (state.lang === 'ru' ? '¦Ø¦Ó¦à¦Ð¦â¦ì ¦á¦Þ¦Ò¦ë¦â¦Ø¦Õ' : 'PLAY EVENT');
+                hubBonus.onclick = () => this.startEvent(h);
             }
         });
+        if (!activeHoliday && now.getDate() > 10) hubBonus.classList.add('hidden');
     },
-    claim(h) {
-        const claimed = JSON.parse(localStorage.getItem('mx_claimed_holidays') || '[]');
-        if (claimed.includes(h.id)) return alert(state.lang === 'ru' ? '¦ã¦¦¦¦ ¦¬¦-¦¬TÃTÇ¦¦¦-¦-!' : 'Already claimed!');
+    startEvent(h) {
+        const completed = JSON.parse(localStorage.getItem('mx_event_done') || '[]');
+        if (completed.includes(h.id)) {
+            alert(state.lang === 'ru' ? '¦á¦-¦-TËTÂ¦¬¦¦ TÃ¦¦¦ ¦¬TÀ¦-¦¦+¦¦¦-¦-!' : 'Event already completed!');
+            return;
+        }
+        state.isHolidayEvent = h;
+        startLevel('expert', 99); // Ñïåöèàëüíûé óðîâåíü äëÿ ñîáûòèÿ
+    },
+    completeEvent() {
+        if (!state.isHolidayEvent) return;
+        const h = state.isHolidayEvent;
+        const completed = JSON.parse(localStorage.getItem('mx_event_done') || '[]');
+        completed.push(h.id);
+        localStorage.setItem('mx_event_done', JSON.stringify(completed));
         
         state.coins += h.reward;
-        claimed.push(h.id);
-        localStorage.setItem('mx_claimed_holidays', JSON.stringify(claimed));
+        // Äîáàâëÿåì ïðàçäíè÷íóþ êàðòèíêó â èíâåíòàðü (çàãëóøêà äëÿ ëîãèêè ãàëåðåè)
+        if (!state.inventory.arts) state.inventory.arts = [];
+        state.inventory.arts.push(h.art_id);
+        
         updateUI();
-        alert(\: +\ TÀTß¦ÄòÄâ);
+        alert('TÀTßòÀÝòÄÖ ' + h.name + ' ' + (state.lang === 'ru' ? '¦ß¦à¦Þ¦éä¦Õ¦Ý¦Þ!' : 'COMPLETED!') + ' +' + h.reward + ' TÀTß¦ÄòÄâ');
+        state.isHolidayEvent = null;
         ServerAPI.sync();
     }
 };
 
 window.onload = async () => {
-    if (typeof AudioManager !== 'undefined') AudioManager.init();
-    
+    if (typeof AudioManager !== "undefined") AudioManager.init();
+
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
         state.coins = serverData.user.coins;
         state.xp = serverData.user.xp;
-        state.level = serverData.user.level;        if (serverData.user.theme) state.theme = serverData.user.theme;        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
+        state.level = serverData.user.level;
+        if (serverData.user.theme) state.theme = serverData.user.theme;
+        if (serverData.user.owned_themes) state.inventory.themes = serverData.user.owned_themes;
+        if (serverData.user.hints !== undefined) state.inventory.hints = serverData.user.hints;
+        if (serverData.user.crystals !== undefined) state.inventory.crystals = serverData.user.crystals;
+        if (serverData.user.freezes !== undefined) state.inventory.freezes = serverData.user.freezes;
     }
 
     applyLanguage();
     applyTheme(state.theme);
-    updateUI();
     initApp();
-    updateUI(); initShop(); HolidayEngine.check();
+    updateUI(); 
+    initShop();
+    HolidayEngine.check();
 };
 
 function safeSetClick(id, fn) { 
@@ -1410,6 +1439,8 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
+
 
 
 

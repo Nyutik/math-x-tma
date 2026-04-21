@@ -355,3 +355,26 @@ body {
     .num-btn { height: 40px; font-size: 1.1rem; }
     .action-btn { height: 46px; }
 }
+
+/* ULTRA COMPACT FOR TELEGRAM DESKTOP */
+@media (max-height: 650px) {
+    .screen { padding: 10px; }
+    .hub-header { display: none; }
+    .main-play-card { min-height: 60px; margin-bottom: 5px; padding: 0 15px; }
+    .main-play-card h1 { font-size: 1.2rem; }
+    .card-icon { display: none; }
+    .streak-banner { padding: 8px 12px; margin-bottom: 5px; font-size: 0.75rem; }
+    .hub-grid { gap: 5px; margin-bottom: 5px; }
+    .hub-item { padding: 8px; font-size: 0.7rem; }
+    
+    .game-header-bar { margin-bottom: 5px; }
+    .puzzle-header h2 { font-size: 0.9rem; }
+    #math-grid { gap: 2px; padding: 5px; max-width: 320px; }
+    .cell { font-size: 0.9rem; border-radius: 4px; }
+    .cell.operator { font-size: 1rem; }
+    
+    .progress-container { margin-bottom: 8px; height: 4px; }
+    .number-input-area { gap: 4px; margin-bottom: 8px; }
+    .num-btn { height: 32px; font-size: 1rem; border-radius: 8px; }
+    .action-btn { height: 38px; font-size: 0.8rem; border-radius: 10px; }
+}

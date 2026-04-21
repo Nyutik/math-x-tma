@@ -168,6 +168,12 @@ function applyTheme(t) {
 function updateUI() {
     const hubCoins = document.getElementById('hub-coins');
     if (hubCoins) hubCoins.textContent = state.coins;
+    const hubHints = document.getElementById('hub-hints');
+    if (hubHints) hubHints.textContent = state.inventory.hints;
+    const hubFreezes = document.getElementById('hub-freezes');
+    if (hubFreezes) hubFreezes.textContent = state.inventory.freezes;
+    const hubCrystals = document.getElementById('hub-crystals');
+    if (hubCrystals) hubCrystals.textContent = state.inventory.crystals;
     
     const userLv = document.getElementById('user-level-tag');
     if (userLv) userLv.textContent = `${state.lang === 'ru' ? 'УР.' : 'LVL.'} ${state.level}`;
@@ -1366,5 +1372,6 @@ window.addEventListener('beforeunload', () => {
         saveCurrentToSession(true);
     }
 });
+
 
 

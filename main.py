@@ -41,7 +41,12 @@ class SyncState(BaseModel):
     unlocked_easy: int
     unlocked_medium: int
     unlocked_hard: int
-    unlocked_expert: int`n    hints: Optional[int] = 5`n    crystals: Optional[int] = 2`n    freezes: Optional[int] = 3`n    theme: Optional[str] = "onyx"`n    owned_themes: Optional[List[str]] = []
+    unlocked_expert: int
+    hints: Optional[int] = 5
+    crystals: Optional[int] = 2
+    freezes: Optional[int] = 3
+    theme: Optional[str] = 'onyx'
+    owned_themes: Optional[List[str]] = []
 
 class GameScore(BaseModel):
     telegram_id: int
@@ -153,4 +158,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 

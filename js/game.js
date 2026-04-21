@@ -26,6 +26,8 @@ const I18N = {
         pack_hints: "Пак подсказок", pack_hints_desc: "5 быстрых решений",
         pack_crystals: "Пак кристаллов", pack_crystals_desc: "3 супер-подсказки",
         pack_freeze: "Заморозка", pack_freeze_desc: "Стоп таймер (15с)",
+        pack_magnet: "Магнит", pack_magnet_desc: "Притянет нужную цифру",
+        invite: "Пригласить друга", invite_desc: "И получи +100 монет",
         theme_paper_desc: "Стиль тетради", theme_amethyst_desc: "Космический фиолетовый",
         theme_starry_desc: "Мерцающее ночное небо", theme_cyberpunk_desc: "Неон и глитч-эффекты",
         theme_matrix: "Матрица", theme_matrix_desc: "Хакерский зеленый код",
@@ -265,6 +267,9 @@ function updateUI() {
     const crystalCount = document.getElementById('crystal-count');
     if (crystalCount) crystalCount.textContent = state.inventory.crystals;
 
+    const magnetCount = document.getElementById('magnet-count');
+    if (magnetCount) magnetCount.textContent = state.inventory.magnets || 0;
+
     const musicBtn = document.getElementById('toggle-music-btn');
     if (musicBtn && typeof AudioManager !== 'undefined') {
         musicBtn.textContent = AudioManager.isMusicOff ? (state.lang === 'ru' ? 'ВЫКЛ' : 'OFF') : (state.lang === 'ru' ? 'ВКЛ' : 'ON');
@@ -451,6 +456,24 @@ function initApp() {
     safeSetClick('hint-btn', useHint);
     safeSetClick('freeze-btn', useFreeze);
     safeSetClick('crystal-btn', useCrystal);
+    safeSetClick('magnet-btn', useMagnet);
+
+    safeSetClick('invite-btn', () => {
+        const inviteText = encodeURIComponent(state.lang === 'ru' ? "Спорим, не решишь эту математическую головоломку? Присоединяйся!" : "Bet you can't solve this math puzzle! Join now!");
+        const botUrl = encodeURIComponent("https://t.me/MathX_Bot");
+        const tgLink = `https://t.me/share/url?url=${botUrl}&text=${inviteText}`;
+        if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
+        else window.open(tgLink, '_blank');
+        
+        if (!localStorage.getItem('mx_invited')) {
+            state.coins += 100;
+            addTransaction('earned', 'invite', 100);
+            localStorage.setItem('mx_invited', 'true');
+            saveData(); updateUI();
+            showToast('+100 🪙');
+            Haptics.success();
+        }
+    });
 
     safeSetClick('claim-btn', function() {
         const today = getLocalDateStr();
@@ -616,6 +639,7 @@ function initShop() {
             if (id.startsWith('hint')) state.inventory.hints += (id === 'hint_5' ? 5 : 1);
             else if (id === 'freeze') state.inventory.freezes++;
             else if (id.startsWith('crystal')) state.inventory.crystals += (id === 'crystal_3' ? 3 : 1);
+            else if (id === 'magnet') state.inventory.magnets = (state.inventory.magnets || 0) + 1;
             else if (id.startsWith('theme_')) {
                 const themeName = id.replace('theme_', '');
                 state.inventory.themes.push(themeName);
@@ -896,7 +920,10 @@ function checkWin() {
     if (state.isDaily) addTransaction('earned', 'daily', reward);
     else if (state.isBattle) addTransaction('earned', 'battle', reward);
     else addTransaction('earned', 'level', reward);
-    state.xp += 20;
+    let xpGained = 20;
+    let isStreakBonus = state.streak >= 7;
+    if (isStreakBonus) xpGained *= 2;
+    state.xp += xpGained;
     state.level = Math.floor(state.xp / 100) + 1;
     
     // Auto-claim available missions after 1.5s
@@ -907,6 +934,9 @@ function checkWin() {
         let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} 🪙</span>`;
         if (state.isDaily) {
             rewardText += ` <span style="color:#a855f7; font-size:1.2rem; text-shadow:0 0 10px #a855f7;">+1 💎</span>`;
+        }
+        if (isStreakBonus) {
+            rewardText += ` <br><span style="color:var(--accent); font-size:0.9rem; font-weight:bold;">🔥 СЕРИЯ x2 XP (+${xpGained} XP)</span>`;
         }
         winRewardText.innerHTML = rewardText;
     }
@@ -1132,6 +1162,35 @@ function useCrystal() {
     updateUI();
     updateProgressBar();
     checkWin();
+}
+
+function useMagnet() {
+    if (state.inventory.magnets <= 0 || !state.isGameActive) { Haptics.error(); return; }
+    if (!state.selected || state.selected.classList.contains('hinted') || state.selected.classList.contains('fixed')) {
+        showToast(state.lang === 'ru' ? 'Выбери пустую клетку!' : 'Select an empty cell!');
+        Haptics.warning();
+        return;
+    }
+    
+    const r = state.selected.dataset.r, col = state.selected.dataset.c;
+    const ans = state.currentAnswers[`${r}-${col}`];
+    
+    if (ans) {
+        Haptics.success();
+        state.inventory.magnets--;
+        state.selected.textContent = ans;
+        state.selected.classList.remove('empty');
+        state.selected.classList.add('fixed', 'hinted');
+        state.fixedCells[`${r}-${col}`] = 'hinted';
+        
+        state.selected.classList.remove('selected');
+        state.selected = null;
+        
+        saveCurrentToSession();
+        updateUI();
+        updateProgressBar();
+        checkWin();
+    }
 }
 
 function startBot() {

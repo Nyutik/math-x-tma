@@ -235,10 +235,15 @@
                             </button>                        </div>
                     </div>
 
-                    <div style="background: var(--card-onyx); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; text-align: center; opacity: 0.6;">
-                        <i data-lucide="users" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 10px;"></i>
+                    <div style="background: var(--card-onyx); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; text-align: center;">
+                        <i data-lucide="users" style="width: 48px; height: 48px; color: var(--accent); margin-bottom: 10px;"></i>
                         <h3 data-i18n="vs_friend" style="margin: 0 0 10px 0;">Играть с Другом</h3>
-                        <p style="color: var(--text-dim); font-size: 0.85rem; margin: 0;">Мультиплеер скоро появится!</p>
+                        <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px;" data-i18n="vs_friend_duel_desc">Вызови друга на дуэль и сразись за монеты!</p>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            <button class="duel-invite-btn" data-stake="50" style="padding: 12px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,242,255,0.1); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="share-2" style="width:16px; height:16px;"></i> <span data-i18n="invite_duel">Вызвать на дуэль</span> (50 🪙)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -307,6 +312,7 @@
                     <p data-i18n="rules_text_4">4. <b>Вызов дня:</b> Особый сложный уровень. Пройди его, чтобы получить много монет и редкий Кристалл!</p>
                     <p data-i18n="rules_text_5">5. <b>Ежедневный бонус:</b> Заходи в игру каждый день и забирай бесплатные монеты в главном меню!</p>
                     <p data-i18n="rules_text_6">6. <b>Серия побед:</b> Заходи 7 дней подряд, чтобы получать x2 Опыта (XP) за каждый уровень!</p>
+                    <p data-i18n="rules_text_7">7. <b>Галерея:</b> Решай уровни, чтобы открывать кусочки артов-пазлов. Полностью собранный арт можно скачать!</p>
                 </div>
             </div>
 
@@ -541,8 +547,8 @@
 
         </div>
     </div>
-    <script src="js/generator.js?v=7.2"></script>
-    <script src="js/audio.js?v=7.2"></script>
-    <script src="js/game.js?v=7.2"></script>
+    <script src="js/generator.js?v=7.5"></script>
+    <script src="js/audio.js?v=7.5"></script>
+    <script src="js/game.js?v=7.5"></script>
 </body>
 </html>

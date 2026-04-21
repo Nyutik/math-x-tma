@@ -20,7 +20,8 @@ const I18N = {
         rules_text_7: "7. <b>Галерея:</b> Решай уровни, чтобы открывать кусочки артов-пазлов. Полностью собранный арт можно скачать!",
         missions_desc: "Выполняй задачи и получай монеты!", gallery_title: "Галерея артов",
         vs_bot: "Играть с Ботом", vs_bot_desc: "Тренируйся и зарабатывай монеты",
-        vs_friend: "Играть с Другом", vs_friend_desc: "Мультиплеер скоро появится!",
+        vs_friend: "Играть с Другом", vs_friend_duel_desc: "Вызови друга на дуэль и сразись за монеты!",
+        invite_duel: "Вызвать на дуэль",
         bot_easy: "Легкий Бот", bot_med: "Средний Бот", bot_hard: "Жесткий Бот",
         reward: "Награда:", bot_faster: "Противник оказался быстрее!", stake: "Ставка",
         levels_desc: "Выбор уровня", player_rank: "РАНГ ИГРОКА", stats_solved: "Решено уровней", stats_crystals: "Кристаллы",
@@ -127,7 +128,83 @@ const tg = window.Telegram?.WebApp || {
 };
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
+const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/math/ws/pvp` : `ws://${window.location.host}/ws/pvp`;
 console.log('🚀 MathX v5.0 Loaded - API:', API_URL);
+
+// --- PVP Client ---
+const PVPClient = {
+    socket: null,
+    roomId: null,
+    opponentData: null,
+    
+    connect() {
+        if (this.socket) return;
+        const url = `${WS_URL}/${ServerAPI.getTId()}`;
+        this.socket = new WebSocket(url);
+        
+        this.socket.onopen = () => console.log('[PVP] Connected');
+        this.socket.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            this.handleMessage(msg);
+        };
+        this.socket.onclose = () => {
+            console.log('[PVP] Disconnected');
+            this.socket = null;
+        };
+    },
+    
+    handleMessage(msg) {
+        if (msg.status === 'joined') {
+            this.roomId = msg.room_id;
+            showToast(state.lang === 'ru' ? 'Ожидание соперника...' : 'Waiting for opponent...');
+        } else if (msg.status === 'start') {
+            this.opponentData = Object.values(msg.players).find(p => p.name !== (tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name));
+            showToast(state.lang === 'ru' ? 'Битва начинается!' : 'Battle starts!');
+            Haptics.success();
+            startLevel(msg.difficulty || 'easy', 'BATTLE', msg.seed);
+        } else if (msg.status === 'opponent_update') {
+            const fill = document.getElementById('opponent-progress-fill');
+            const text = document.getElementById('opponent-progress-text');
+            if (fill) fill.style.width = `${msg.progress}%`;
+            if (text) text.textContent = `${Math.round(msg.progress)}%`;
+        } else if (msg.status === 'game_over') {
+            if (msg.winner_id === ServerAPI.getTId()) {
+                // We won handled locally
+            } else {
+                Haptics.error();
+                clearInterval(state.timerInterval);
+                showModal('battle-lost');
+            }
+        }
+    },
+    
+    joinRoom(roomId, diff) {
+        this.connect();
+        const wait = setInterval(() => {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({
+                    action: 'join_room',
+                    room_id: roomId,
+                    difficulty: diff,
+                    name: tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name
+                }));
+                clearInterval(wait);
+            }
+        }, 100);
+    },
+    
+    sendProgress(p) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ action: 'update_progress', progress: p }));
+        }
+    },
+    
+    sendWin() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ action: 'win' }));
+        }
+    }
+};
 
 const ServerAPI = {
     get isTelegram() { return typeof tg !== 'undefined' && tg.initDataUnsafe?.user; },
@@ -366,6 +443,24 @@ function addTransaction(type, category, amount) {
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
     
+    // Check for duel link
+    const startParam = tg.initDataUnsafe?.start_param;
+    if (startParam && startParam.startsWith('duel_')) {
+        const parts = startParam.split('_');
+        const roomId = parts[1];
+        const diff = parts[2] || 'easy';
+        const stake = parseInt(parts[3] || '50');
+        
+        if (state.coins < stake) {
+            showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
+        } else {
+            state.coins -= stake;
+            state.battleStake = stake;
+            state.battleBotDiff = null; // Real PvP
+            PVPClient.joinRoom(roomId, diff);
+        }
+    }
+
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
     if (serverData?.user) {
         const u = serverData.user;
@@ -691,36 +786,24 @@ function getTimeToMidnight() {
     return `${hours}ч ${mins}м`;
 }
 
-function startLevel(diff, num) {
+function startLevel(diff, num, seed = null) {
     state.isBattle = (num === 'BATTLE');
     state.isDaily = (num === 'Daily');
-    if (state.isDaily) {
-        const today = getLocalDateStr();
-        // Reset dailyCompleted if it's a new day
-        if (state.lastDaily !== today) {
-            state.dailyCompleted = false;
-            localStorage.setItem('mx_daily_completed', 'false');
-        }
-        const isCompletedToday = state.lastDaily === today && state.dailyCompleted;
-        
-        if (isCompletedToday) {
-            state.isDailyCompleted = true;
-        } else {
-            state.isDailyCompleted = false;
-        }
-    }
+    
+    // Show opponent progress bar if real PvP or Bot
+    const oppBar = document.getElementById('opponent-progress-container');
+    if (oppBar) oppBar.style.display = state.isBattle ? 'block' : 'none';
 
     let level;
     let seconds = 0;
 
-    if (state.activeSession && state.activeSession.diff === diff && state.activeSession.num === num) {
+    if (state.activeSession && state.activeSession.diff === diff && state.activeSession.num === num && !state.isBattle) {
         level = { grid: state.activeSession.grid, answers: state.activeSession.answers, fixedCells: state.activeSession.fixedCells };
         state.lastGeneratedGrid = state.activeSession.lastGeneratedGrid;
         seconds = state.activeSession.seconds;
     } else {
-        // Use num as seed for consistency if not daily
-        const seed = state.isDaily ? null : (typeof num === 'number' ? num : null);
-        level = state.isDaily ? window.LevelGenerator.generateDaily(getLocalDateStr()) : window.LevelGenerator.generateLevel(diff, seed);
+        const generatorSeed = seed || (state.isDaily ? null : (typeof num === 'number' ? num : null));
+        level = state.isDaily ? window.LevelGenerator.generateDaily(getLocalDateStr()) : window.LevelGenerator.generateLevel(diff, generatorSeed);
         if (!level) return alert('Ошибка генерации!');
         state.lastGeneratedGrid = level.grid;
         seconds = 0;
@@ -810,6 +893,13 @@ function inputNum(n) {
     saveCurrentToSession();
     validateLines();
     updateProgressBar();
+
+    if (state.isBattle && !state.battleBotDiff) { // Real PvP
+        const total = Object.keys(state.currentAnswers).length;
+        const filled = Array.from(document.querySelectorAll('.cell.empty')).filter(c => c.textContent !== '').length;
+        PVPClient.sendProgress((filled / total) * 100);
+    }
+
     checkWin();
 }
 
@@ -927,7 +1017,10 @@ function checkWin() {
     const reward = (state.isDaily ? 200 : (state.isBattle ? state.battleStake * 2 : (state.diff === 'hard' ? 50 : 30)));
     state.coins += reward;
     if (state.isDaily) addTransaction('earned', 'daily', reward);
-    else if (state.isBattle) addTransaction('earned', 'battle', reward);
+    else if (state.isBattle) {
+        addTransaction('earned', 'battle', reward);
+        if (!state.battleBotDiff) PVPClient.sendWin();
+    }
     else addTransaction('earned', 'level', reward);
     let xpGained = 20;
     let isStreakBonus = state.streak >= 7;

@@ -1,7 +1,9 @@
 import os
+import asyncio
+import uuid
 import traceback
-from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Depends, Header, Request
+from typing import Optional, List, Dict
+from fastapi import FastAPI, HTTPException, Depends, Header, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +15,47 @@ from datetime import datetime
 load_dotenv()
 
 app = FastAPI(title="MathX API")
+
+# --- PVP Room Manager ---
+class PVPRoom:
+    def __init__(self, room_id: str, difficulty: str = "easy"):
+        self.room_id = room_id
+        self.difficulty = difficulty
+        self.players: Dict[int, WebSocket] = {}
+        self.player_data: Dict[int, dict] = {} # Progress, names
+        self.grid_data = None
+        self.is_started = False
+
+class PVPManager:
+    def __init__(self):
+        self.rooms: Dict[str, PVPRoom] = {}
+        self.player_to_room: Dict[int, str] = {}
+
+    async def connect(self, websocket: WebSocket, player_id: int):
+        await websocket.accept()
+        
+    def disconnect(self, player_id: int):
+        if player_id in self.player_to_room:
+            room_id = self.player_to_room[player_id]
+            if room_id in self.rooms:
+                if player_id in self.rooms[room_id].players:
+                    del self.rooms[room_id].players[player_id]
+                if not self.rooms[room_id].players:
+                    del self.rooms[room_id]
+            del self.player_to_room[player_id]
+
+    async def broadcast_to_room(self, room_id: str, message: dict):
+        if room_id in self.rooms:
+            disconnected = []
+            for pid, ws in self.rooms[room_id].players.items():
+                try:
+                    await ws.send_json(message)
+                except:
+                    disconnected.append(pid)
+            for pid in disconnected:
+                self.disconnect(pid)
+
+pvp_manager = PVPManager()
 
 app.add_middleware(
     CORSMiddleware,
@@ -133,15 +176,76 @@ async def get_user_stats(telegram_id: int):
 
 @app.get("/missions/{telegram_id}")
 async def get_missions(telegram_id: int):
-    # Заглушка для миссий
     return []
+
+# --- PVP WEBSOCKET ---
+@app.websocket("/ws/pvp/{player_id}")
+async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
+    await pvp_manager.connect(websocket, player_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            action = data.get("action")
+            
+            if action == "join_room":
+                room_id = data.get("room_id")
+                if not room_id: continue
+                
+                if room_id not in pvp_manager.rooms:
+                    pvp_manager.rooms[room_id] = PVPRoom(room_id, data.get("difficulty", "easy"))
+                
+                room = pvp_manager.rooms[room_id]
+                room.players[player_id] = websocket
+                room.player_data[player_id] = {"name": data.get("name", "Player"), "progress": 0}
+                pvp_manager.player_to_room[player_id] = room_id
+                
+                if len(room.players) == 2:
+                    room.is_started = True
+                    # In a real app, generate grid once here and send to both
+                    await pvp_manager.broadcast_to_room(room_id, {
+                        "status": "start",
+                        "room_id": room_id,
+                        "difficulty": room.difficulty,
+                        "players": room.player_data,
+                        "seed": room_id # Use room_id as seed for identical grid
+                    })
+                else:
+                    await websocket.send_json({"status": "joined", "room_id": room_id})
+
+            elif action == "update_progress":
+                room_id = pvp_manager.player_to_room.get(player_id)
+                if room_id and room_id in pvp_manager.rooms:
+                    room = pvp_manager.rooms[room_id]
+                    room.player_data[player_id]["progress"] = data.get("progress", 0)
+                    for pid, ws in room.players.items():
+                        if pid != player_id:
+                            try:
+                                await ws.send_json({
+                                    "status": "opponent_update",
+                                    "player_id": player_id,
+                                    "progress": data.get("progress")
+                                })
+                            except: pass
+
+            elif action == "win":
+                room_id = pvp_manager.player_to_room.get(player_id)
+                if room_id:
+                    await pvp_manager.broadcast_to_room(room_id, {
+                        "status": "game_over",
+                        "winner_id": player_id
+                    })
+
+    except WebSocketDisconnect:
+        pvp_manager.disconnect(player_id)
+    except Exception as e:
+        print(f"WS Error: {e}")
+        pvp_manager.disconnect(player_id)
 
 # --- РАЗДАЧА СТАТИКИ ---
 app.mount("/js", StaticFiles(directory="js"), name="js")
 app.mount("/css", StaticFiles(directory="css"), name="css")
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
-# Ловушка для музыки
 @app.get("/paulyudin-chill-silent-bloom-chill.mp3")
 async def get_legacy_audio():
     return FileResponse("assets/paulyudin-chill-silent-bloom-chill.mp3")

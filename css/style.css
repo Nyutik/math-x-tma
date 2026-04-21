@@ -67,16 +67,18 @@
     --glass: rgba(192, 160, 255, 0.1);
     --glass-border: rgba(192, 160, 255, 0.2);
     background-image: 
-        radial-gradient(2px 2px at 20px 30px, #fff, transparent),
-        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
-        radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 230px 80px, #fff, transparent),
-        radial-gradient(2px 2px at 300px 200px, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 350px 150px, #fff, transparent),
-        radial-gradient(2px 2px at 420px 50px, rgba(255,255,255,0.8), transparent);
-    background-size: 450px 250px;
-    animation: twinkle 8s ease-in-out infinite alternate;
+        radial-gradient(3px 3px at 20px 30px, #fff, transparent),
+        radial-gradient(3px 3px at 40px 70px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 90px 40px, #fff, transparent),
+        radial-gradient(3px 3px at 160px 120px, rgba(255,255,255,1), transparent),
+        radial-gradient(2px 2px at 230px 80px, #fff, transparent),
+        radial-gradient(3px 3px at 300px 200px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 350px 150px, #fff, transparent),
+        radial-gradient(4px 4px at 420px 50px, rgba(255,255,255,1), transparent),
+        radial-gradient(2px 2px at 50px 200px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(3px 3px at 200px 250px, #fff, transparent);
+    background-size: 500px 300px;
+    animation: twinkle 5s ease-in-out infinite alternate;
 }
 
 @keyframes twinkle {

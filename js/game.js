@@ -10,7 +10,26 @@ const I18N = {
         easy: "ЛЕГКО", medium: "СРЕДНЕ", hard: "СЛОЖНО", expert: "ЭКСПЕРТ",
         paused: "ПАУЗА", resume: "ПРОДОЛЖИТЬ", gallery: "ГАЛЕРЕЯ", missions: "ЗАДАНИЯ",
         music: "Музыка", sound: "Звуки", theme: "Тема", daily_reward: "Ежедневный Бонус", language: "Язык",
-        theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм", theme_starry: "Звёзды", theme_cyberpunk: "Киберпанк"
+        theme_onyx: "Оникс", theme_light: "Светлая", theme_amethyst: "Аметист", theme_paper: "Бумага", theme_telegram: "Телеграм", theme_starry: "Звёзды", theme_cyberpunk: "Киберпанк",
+        rules_text_1: "1. <b>Цель:</b> Заполни пустые клетки цифрами от 1 до 9 так, чтобы все уравнения по горизонтали и вертикали стали верными.",
+        rules_text_2: "2. <b>Порядок действий:</b> Все вычисления производятся строго <b>слева направо</b> и <b>сверху вниз</b>. Приоритет умножения и деления игнорируется.",
+        rules_text_3: "3. <b>Подсказки:</b> Если застрял, используй Подсказку (открывает 1 клетку) или Кристалл (открывает 3 клетки).",
+        rules_text_4: "4. <b>Вызов дня:</b> Особый сложный уровень. Пройди его, чтобы получить много монет и редкий Кристалл!",
+        rules_text_5: "5. <b>Ежедневный бонус:</b> Заходи в игру каждый день и забирай бесплатные монеты в главном меню!",
+        missions_desc: "Выполняй задачи и получай монеты!", gallery_title: "Галерея артов",
+        vs_bot: "Играть с Ботом", vs_bot_desc: "Тренируйся и зарабатывай монеты",
+        vs_friend: "Играть с Другом", vs_friend_desc: "Мультиплеер скоро появится!",
+        bot_easy: "Легкий Бот", bot_med: "Средний Бот", bot_hard: "Жесткий Бот",
+        reward: "Награда:", bot_faster: "Противник оказался быстрее!",
+        levels_desc: "Выбор уровня", player_rank: "РАНГ ИГРОКА", stats_solved: "Решено уровней", stats_crystals: "Кристаллы",
+        shop_boosters: "БУСТЕРЫ", shop_themes: "ТЕМЫ",
+        pack_hints: "Пак подсказок", pack_hints_desc: "5 быстрых решений",
+        pack_crystals: "Пак кристаллов", pack_crystals_desc: "3 супер-подсказки",
+        pack_freeze: "Заморозка", pack_freeze_desc: "Стоп таймер (15с)",
+        theme_paper_desc: "Стиль тетради", theme_amethyst_desc: "Космический фиолетовый",
+        theme_starry_desc: "Мерцающее ночное небо", theme_cyberpunk_desc: "Неон и глитч-эффекты",
+        level_select: "Выберите уровень", level_complete: "УРОВЕНЬ ПРОЙДЕН!", close: "ЗАКРЫТЬ",
+        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> и Кристалл", battle_lobby: "Режим Битвы"
     },
     en: {
         play: "PLAY", daily_level: "CHALLENGE", battle: "BATTLE", shop: "SHOP", stats: "STATS",
@@ -21,7 +40,26 @@ const I18N = {
         easy: "EASY", medium: "MEDIUM", hard: "HARD", expert: "EXPERT",
         paused: "PAUSED", resume: "RESUME", gallery: "GALLERY", missions: "MISSIONS",
         music: "Music", sound: "Sound", theme: "Theme", daily_reward: "Daily Reward", language: "Language",
-        theme_onyx: "Onyx", theme_light: "Light", theme_amethyst: "Amethyst", theme_paper: "Paper", theme_telegram: "Telegram", theme_starry: "Starry", theme_cyberpunk: "Cyberpunk"
+        theme_onyx: "Onyx", theme_light: "Light", theme_amethyst: "Amethyst", theme_paper: "Paper", theme_telegram: "Telegram", theme_starry: "Starry", theme_cyberpunk: "Cyberpunk",
+        rules_text_1: "1. <b>Goal:</b> Fill empty cells with numbers 1 to 9 so that all horizontal and vertical equations are correct.",
+        rules_text_2: "2. <b>Order of Operations:</b> All calculations are strictly <b>left to right</b> and <b>top to bottom</b>. Multiplication and division priority is ignored.",
+        rules_text_3: "3. <b>Hints:</b> If stuck, use a Hint (reveals 1 cell) or a Crystal (reveals 3 cells).",
+        rules_text_4: "4. <b>Daily Challenge:</b> A special hard level. Beat it to get many coins and a rare Crystal!",
+        rules_text_5: "5. <b>Daily Bonus:</b> Enter the game every day and claim free coins in the main menu!",
+        missions_desc: "Complete tasks and earn coins!", gallery_title: "Art Gallery",
+        vs_bot: "Play vs Bot", vs_bot_desc: "Practice and earn coins",
+        vs_friend: "Play vs Friend", vs_friend_desc: "Multiplayer coming soon!",
+        bot_easy: "Easy Bot", bot_med: "Medium Bot", bot_hard: "Hard Bot",
+        reward: "Reward:", bot_faster: "The opponent was faster!",
+        levels_desc: "Level Selection", player_rank: "PLAYER RANK", stats_solved: "Solved Levels", stats_crystals: "Crystals",
+        shop_boosters: "BOOSTERS", shop_themes: "THEMES",
+        pack_hints: "Hint Pack", pack_hints_desc: "5 quick solutions",
+        pack_crystals: "Crystal Pack", pack_crystals_desc: "3 super-hints",
+        pack_freeze: "Freeze", pack_freeze_desc: "Stop timer (15s)",
+        theme_paper_desc: "Notebook style", theme_amethyst_desc: "Cosmic purple",
+        theme_starry_desc: "Twinkling night sky", theme_cyberpunk_desc: "Neon and glitch effects",
+        level_select: "Select Level", level_complete: "LEVEL COMPLETED!", close: "CLOSE",
+        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> & Crystal", battle_lobby: "Battle Lobby"
     }
 };
 
@@ -204,6 +242,11 @@ function updateUI() {
         if (window.lucide) lucide.createIcons();
     }
 
+    const streakTextEl = document.getElementById('streak-text');
+    if (streakTextEl) {
+        streakTextEl.textContent = state.lang === 'ru' ? `Серия: ${state.streak} дней` : `Streak: ${state.streak} days`;
+    }
+
     const hintText = document.querySelector('#hint-btn span');
     if (hintText) hintText.textContent = `${I18N[state.lang].hint} (${state.inventory.hints})`;
 
@@ -322,6 +365,10 @@ window.onload = async () => {
         if (u.theme && state.inventory.themes.includes(u.theme)) {
             state.theme = u.theme;
         }
+        
+        state.stats.totalSolved = Math.max(state.stats.totalSolved || 0, 
+            (state.unlocked - 1) + (state.unlockedMedium - 1) + (state.unlockedHard - 1) + (state.unlockedExpert - 1)
+        );
 
         saveData();
     }

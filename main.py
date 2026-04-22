@@ -18,7 +18,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 load_dotenv()
 
 # --- BOT CONFIG ---
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://t.me/mathx_infinity_bot/play")
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None

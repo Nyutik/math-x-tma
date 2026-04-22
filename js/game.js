@@ -131,6 +131,13 @@ const tg = window.Telegram?.WebApp || {
     initDataUnsafe: { user: { first_name: "", id: 12345 } }
 };
 
+try {
+    tg.ready?.();
+    tg.expand?.();
+} catch (e) {
+    console.warn('[TG] WebApp init failed', e);
+}
+
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
 const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/math/ws/pvp` : `ws://${window.location.host}/ws/pvp`;
 const BOT_USERNAME = 'mathx_infinity_bot';
@@ -144,13 +151,25 @@ const PVPClient = {
     roomId: null,
     opponentData: null,
     readyPlayers: {},
+    pendingJoin: null,
+    reconnectTimer: null,
     
     connect() {
-        if (this.socket) return;
+        if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) return;
         const url = `${WS_URL}/${ServerAPI.getTId()}`;
         this.socket = new WebSocket(url);
         
-        this.socket.onopen = () => console.log('[PVP] Connected');
+        this.socket.onopen = () => {
+            console.log('[PVP] Connected');
+            if (this.reconnectTimer) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
+            this.flushPendingJoin();
+        };
+        this.socket.onerror = (event) => {
+            console.error('[PVP] Socket error', event);
+        };
         this.socket.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             this.handleMessage(msg);
@@ -158,15 +177,33 @@ const PVPClient = {
         this.socket.onclose = () => {
             console.log('[PVP] Disconnected');
             this.socket = null;
+            if (state.pendingPvp && !state.isBattle) {
+                setBattleLobbyStatus(state.lang === 'ru' ? 'Переподключаем дуэль...' : 'Reconnecting duel...');
+                if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = setTimeout(() => this.connect(), 1200);
+            }
         };
+    },
+
+    flushPendingJoin() {
+        if (!this.pendingJoin || !this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+        this.socket.send(JSON.stringify({
+            action: 'join_room',
+            room_id: this.pendingJoin.roomId,
+            difficulty: this.pendingJoin.diff,
+            stake: this.pendingJoin.stake || state.pendingPvp?.stake || state.battleStake || 50,
+            name: tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name
+        }));
     },
     
     handleMessage(msg) {
         if (msg.status === 'joined') {
             this.roomId = msg.room_id;
+            this.pendingJoin = null;
             setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка активна. Ожидаем соперника...' : 'Invite is active. Waiting for opponent...');
             showToast(state.lang === 'ru' ? 'Ожидание соперника...' : 'Waiting for opponent...');
         } else if (msg.status === 'start') {
+            this.pendingJoin = null;
             state.battleStake = msg.stake || state.pendingPvp?.stake || state.battleStake;
             if (state.pendingPvp && !state.pendingPvp.stakeCharged) state.pendingPvp.stakeCharged = true;
             setBattleLobbyStatus('');
@@ -188,6 +225,7 @@ const PVPClient = {
                 ? `Игроки в комнате: ${msg.player_count}/2. Готовы: ${readyCount}/2`
                 : `Players in room: ${msg.player_count}/2. Ready: ${readyCount}/2`);
         } else if (msg.status === 'cancelled') {
+            this.pendingJoin = null;
             state.pendingPvp = null;
             this.roomId = null;
             const cancelText = msg.reason === 'insufficient_coins'
@@ -210,6 +248,7 @@ const PVPClient = {
                 showToast(state.lang === 'ru' ? 'Таймаут ожидания дуэли.' : 'Duel lobby timed out.');
             }
         } else if (msg.status === 'room_unavailable') {
+            this.pendingJoin = null;
             state.pendingPvp = null;
             setBattleLobbyStatus(state.lang === 'ru' ? 'Эта комната уже занята или завершена.' : 'This duel room is already busy or finished.');
             showToast(state.lang === 'ru' ? 'Комната уже недоступна.' : 'This duel room is unavailable.');
@@ -238,19 +277,14 @@ const PVPClient = {
     },
     
     joinRoom(roomId, diff) {
+        this.pendingJoin = {
+            roomId,
+            diff,
+            stake: state.pendingPvp?.stake || state.battleStake || 50
+        };
+        this.roomId = roomId;
         this.connect();
-        const wait = setInterval(() => {
-            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                this.socket.send(JSON.stringify({
-                    action: 'join_room',
-                    room_id: roomId,
-                    difficulty: diff,
-                    stake: state.pendingPvp?.stake || state.battleStake || 50,
-                    name: tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name
-                }));
-                clearInterval(wait);
-            }
-        }, 100);
+        this.flushPendingJoin();
     },
     
     sendProgress(p) {
@@ -523,7 +557,18 @@ function getTelegramStartParam() {
     if (tgParam) return tgParam;
 
     const search = new URLSearchParams(window.location.search);
-    return search.get('tgWebAppStartParam') || search.get('startapp') || search.get('start_param') || '';
+    const hash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    const initData = new URLSearchParams(tg.initData || '');
+    const hrefMatch = (window.location.href || '').match(/(?:tgWebAppStartParam|startapp|start_param)=([^&#]+)/);
+    return search.get('tgWebAppStartParam')
+        || search.get('startapp')
+        || search.get('start_param')
+        || hash.get('tgWebAppStartParam')
+        || hash.get('startapp')
+        || hash.get('start_param')
+        || initData.get('start_param')
+        || (hrefMatch ? decodeURIComponent(hrefMatch[1]) : '')
+        || '';
 }
 
 function parseLaunchData(startParam) {

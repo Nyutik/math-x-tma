@@ -128,6 +128,8 @@ class PVPManager:
         self.player_to_room: Dict[int, str] = {}
 
     async def connect(self, websocket: WebSocket, player_id: int):
+        if player_id in self.player_to_room:
+            self.disconnect(player_id)
         await websocket.accept()
 
     def get_room(self, player_id: int) -> Optional[PVPRoom]:
@@ -462,6 +464,7 @@ async def pvp_room_watcher():
 @app.websocket("/ws/pvp/{player_id}")
 async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
     await pvp_manager.connect(websocket, player_id)
+    print(f"[PVP] websocket connected player={player_id}")
     try:
         while True:
             data = await websocket.receive_json()
@@ -470,6 +473,7 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
             if action == "join_room":
                 room_id = data.get("room_id")
                 if not room_id: continue
+                print(f"[PVP] join_room player={player_id} room={room_id}")
                 
                 if room_id not in pvp_manager.rooms:
                     pvp_manager.rooms[room_id] = PVPRoom(
@@ -479,7 +483,7 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                     )
                 
                 room = pvp_manager.rooms[room_id]
-                if room.status in {"active", "finished", "cancelled"} or len(room.players) >= 2:
+                if room.status in {"active", "finished", "cancelled"} or (len(room.players) >= 2 and player_id not in room.players):
                     await websocket.send_json({"status": "room_unavailable", "room_id": room_id})
                     continue
                 room.players[player_id] = websocket

@@ -24,7 +24,7 @@ const I18N = {
         invite_duel: "Вызвать на дуэль",
         bot_easy: "Легкий Бот", bot_med: "Средний Бот", bot_hard: "Жесткий Бот",
         reward: "Награда:", bot_faster: "Противник оказался быстрее!", stake: "Ставка",
-        levels_desc: "Выбор уровня", player_rank: "РАНГ ИГРОКА", stats_solved: "Решено уровней", stats_crystals: "Кристаллы",
+        levels_desc: "Выбор уровня", player_rank: "РАНГ ИГРОКА", stats_solved: "Решено уровней", stats_crystals: "Кристаллы", stats_referrals: "Приглашено друзей",
         shop_boosters: "БУСТЕРЫ", shop_themes: "ТЕМЫ",
         pack_hints: "Пак подсказок", pack_hints_desc: "5 быстрых решений",
         pack_crystals: "Пак кристаллов", pack_crystals_desc: "3 супер-подсказки",
@@ -60,7 +60,7 @@ const I18N = {
         vs_friend: "Play vs Friend", vs_friend_desc: "Multiplayer coming soon!",
         bot_easy: "Easy Bot", bot_med: "Medium Bot", bot_hard: "Hard Bot",
         reward: "Reward:", bot_faster: "The opponent was faster!", stake: "Stake",
-        levels_desc: "Level Selection", player_rank: "PLAYER RANK", stats_solved: "Solved Levels", stats_crystals: "Crystals",
+        levels_desc: "Level Selection", player_rank: "PLAYER RANK", stats_solved: "Solved Levels", stats_crystals: "Crystals", stats_referrals: "Friends invited",
         shop_boosters: "BOOSTERS", shop_themes: "THEMES",
         pack_hints: "Hint Pack", pack_hints_desc: "5 quick solutions",
         pack_crystals: "Crystal Pack", pack_crystals_desc: "3 super-hints",
@@ -182,6 +182,14 @@ const PVPClient = {
             const text = document.getElementById('opponent-progress-text');
             if (fill) fill.style.width = `${msg.progress}%`;
             if (text) text.textContent = `${Math.round(msg.progress)}%`;
+        } else if (msg.status === 'room_unavailable') {
+            state.pendingPvp = null;
+            showToast(state.lang === 'ru' ? 'Комната уже недоступна.' : 'This duel room is unavailable.');
+        } else if (msg.status === 'opponent_left') {
+            state.pendingPvp = null;
+            if (!state.isBattle) {
+                showToast(state.lang === 'ru' ? 'Соперник вышел из лобби.' : 'Opponent left the lobby.');
+            }
         } else if (msg.status === 'game_over') {
             state.pendingPvp = null;
             if (msg.winner_id === ServerAPI.getTId()) {
@@ -1388,6 +1396,8 @@ async function renderStats() {
     document.getElementById('stats-solved').textContent = totalSolved;
     document.getElementById('stats-crystals').textContent = state.inventory.crystals;
     document.getElementById('stats-hints').textContent = state.inventory.hints;
+    const referralsEl = document.getElementById('stats-referrals');
+    if (referralsEl) referralsEl.textContent = s?.referrals_count || 0;
     
     // Show transaction stats if available
     const transContainer = document.getElementById('stats-transactions');
@@ -1530,11 +1540,10 @@ async function renderMissions() {
                 <span style="font-size:0.8rem; color:var(--text-dim);">${x.progress}/${x.goal}</span>
             </div>
             <button class="buy-btn ${(!done || claimed) ? 'disabled' : ''}" onclick="window.claimMissionReward('${x.id}', ${x.reward})" style="padding: 8px 12px; font-size: 0.8rem;">
-                ${claimed ? '✓' : x.reward + ' '}<i data-lucide="${claimed ? 'check' : 'coins'}" style="width:12px; height:12px;"></i>
+                ${claimed ? '✓' : x.reward + ' ' + COIN_ICON_HTML}
             </button>
         </div>
     `}).join('');
-    if (window.lucide) lucide.createIcons();
 }
 
 window.claimMissionReward = async function(id, reward) {
@@ -1546,15 +1555,15 @@ window.claimMissionReward = async function(id, reward) {
     const goals = { 'solve_3': 3, 'solve_10': 10 };
     if (!goals[id] || state.todaySolved < goals[id]) return; // Can't claim if not done
     
-    // Fallback: add coins locally
-    state.coins += reward;
+    const serverClaim = await ServerAPI.claimMission(id);
+    state.coins += (serverClaim?.status === 'claimed' ? (serverClaim.reward || reward) : reward);
     addTransaction('earned', 'mission', reward);
     claimedMissions[id] = today;
     localStorage.setItem('mx_claimed_missions', JSON.stringify(claimedMissions));
     saveData(); updateUI(); renderMissions();
 };
 
-function checkAndClaimMissions() {
+async function checkAndClaimMissions() {
     const claimedMissions = JSON.parse(localStorage.getItem('mx_claimed_missions') || '{}');
     const today = getLocalDateStr();
     let totalReward = 0;
@@ -1570,7 +1579,8 @@ function checkAndClaimMissions() {
         const m = localMissions[i];
         if (claimedMissions[m.id] === today) continue;
         if (state.todaySolved >= m.goal) {
-            state.coins += m.reward;
+            const serverClaim = await ServerAPI.claimMission(m.id);
+            state.coins += (serverClaim?.status === 'claimed' ? (serverClaim.reward || m.reward) : m.reward);
             addTransaction('earned', 'mission', m.reward);
             totalReward += m.reward;
             missionNames.push(m.title);
@@ -1728,12 +1738,9 @@ function renderNumberPad() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        state.externalNavigationUntil = 0;
-    }
-    if (document.hidden && state.externalNavigationUntil > Date.now()) {
-        return;
-    }
+    if (!document.hidden) state.externalNavigationUntil = 0;
+    if (ServerAPI.isTelegram) return;
+    if (document.hidden && state.externalNavigationUntil > Date.now()) return;
     if (document.hidden && state.isGameActive && !state.isBattle) {
         pauseGame();
         saveCurrentToSession(true);

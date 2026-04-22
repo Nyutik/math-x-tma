@@ -27,7 +27,7 @@ supabase: Client = create_client(url, key) if url and key else None
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "mathx_infinity_bot")
 MINI_APP_SHORT_NAME = os.environ.get("TELEGRAM_MINI_APP_SHORT_NAME", "app")
-WEBAPP_URL = os.environ.get("WEBAPP_URL")
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://glitched-arena.myftp.org/math/")
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
@@ -62,13 +62,17 @@ if dp:
         }
         
         t = texts.get(lang[:2], texts["en"])
-        launch_url = build_mini_app_url(start_param)
-        
         builder = InlineKeyboardBuilder()
-        builder.row(types.InlineKeyboardButton(
-            text=t["btn"], 
-            url=launch_url
-        ))
+        if start_param:
+            builder.row(types.InlineKeyboardButton(
+                text=t["btn"],
+                url=build_mini_app_url(start_param)
+            ))
+        else:
+            builder.row(types.InlineKeyboardButton(
+                text=t["btn"],
+                web_app=types.WebAppInfo(url=WEBAPP_URL)
+            ))
         
         photo_path = "images/square_icon.jpeg"
         if os.path.exists(photo_path):
@@ -122,6 +126,8 @@ class PVPManager:
             if room_id in self.rooms:
                 if player_id in self.rooms[room_id].players:
                     del self.rooms[room_id].players[player_id]
+                if player_id in self.rooms[room_id].player_data:
+                    del self.rooms[room_id].player_data[player_id]
                 if not self.rooms[room_id].players:
                     del self.rooms[room_id]
             del self.player_to_room[player_id]
@@ -174,6 +180,10 @@ class GameScore(BaseModel):
     difficulty: str
     solve_time: int
     points: int
+
+class MissionClaim(BaseModel):
+    telegram_id: int
+    mission_id: str
 
 @app.post("/auth")
 async def auth_user(user: UserAuth):
@@ -269,12 +279,59 @@ async def get_leaderboard():
 async def get_user_stats(telegram_id: int):
     try:
         res = supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", telegram_id).single().execute()
-        return res.data
+        data = res.data or {}
+        try:
+            user_res = supabase.schema("mathx").table("profiles").select("id").eq("telegram_id", telegram_id).single().execute()
+            player_id = user_res.data["id"]
+            scores_res = supabase.schema("mathx").table("scores").select("id", count="exact").eq("player_id", player_id).execute()
+            data["total_solved"] = scores_res.count or 0
+        except Exception:
+            data["total_solved"] = data.get("total_solved", 0)
+        try:
+            refs_res = supabase.schema("mathx").table("profiles").select("telegram_id", count="exact").eq("referred_by", telegram_id).execute()
+            data["referrals_count"] = refs_res.count or 0
+        except Exception:
+            data["referrals_count"] = 0
+        return data
     except: return {}
 
 @app.get("/missions/{telegram_id}")
 async def get_missions(telegram_id: int):
-    return []
+    try:
+        titles = {
+            "solve_3": {"ru": "Реши 3 уровня", "en": "Solve 3 levels"},
+            "solve_10": {"ru": "Математик: 10 уровней", "en": "Mathematician: 10 levels"},
+        }
+        today = datetime.utcnow().date().isoformat()
+        user_res = supabase.schema("mathx").table("profiles").select("id").eq("telegram_id", telegram_id).single().execute()
+        player_id = user_res.data["id"]
+        scores_res = supabase.schema("mathx").table("scores").select("created_at").eq("player_id", player_id).execute()
+        today_solved = 0
+        for row in scores_res.data or []:
+            created_at = (row.get("created_at") or "")[:10]
+            if created_at == today:
+                today_solved += 1
+        return [
+            {"id": "solve_3", "title": titles["solve_3"]["ru"], "goal": 3, "progress": min(today_solved, 3), "reward": 50},
+            {"id": "solve_10", "title": titles["solve_10"]["ru"], "goal": 10, "progress": min(today_solved, 10), "reward": 200},
+        ]
+    except:
+        return []
+
+@app.post("/missions/claim")
+async def claim_mission(data: MissionClaim):
+    rewards = {"solve_3": 50, "solve_10": 200}
+    if data.mission_id not in rewards:
+        return {"status": "invalid_mission"}
+    try:
+        profile_res = supabase.schema("mathx").table("profiles").select("coins").eq("telegram_id", data.telegram_id).single().execute()
+        current_coins = profile_res.data.get("coins", 0) if profile_res and profile_res.data else 0
+        supabase.schema("mathx").table("profiles").update({
+            "coins": current_coins + rewards[data.mission_id]
+        }).eq("telegram_id", data.telegram_id).execute()
+        return {"status": "claimed", "reward": rewards[data.mission_id]}
+    except:
+        return {"status": "error"}
 
 # --- PVP WEBSOCKET ---
 @app.websocket("/ws/pvp/{player_id}")
@@ -293,6 +350,9 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                     pvp_manager.rooms[room_id] = PVPRoom(room_id, data.get("difficulty", "easy"))
                 
                 room = pvp_manager.rooms[room_id]
+                if room.is_started or len(room.players) >= 2:
+                    await websocket.send_json({"status": "room_unavailable", "room_id": room_id})
+                    continue
                 room.players[player_id] = websocket
                 room.player_data[player_id] = {"name": data.get("name", "Player"), "progress": 0}
                 pvp_manager.player_to_room[player_id] = room_id
@@ -334,10 +394,16 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                     })
 
     except WebSocketDisconnect:
+        room_id = pvp_manager.player_to_room.get(player_id)
         pvp_manager.disconnect(player_id)
+        if room_id and room_id in pvp_manager.rooms and pvp_manager.rooms[room_id].players:
+            await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
     except Exception as e:
         print(f"WS Error: {e}")
+        room_id = pvp_manager.player_to_room.get(player_id)
         pvp_manager.disconnect(player_id)
+        if room_id and room_id in pvp_manager.rooms and pvp_manager.rooms[room_id].players:
+            await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
 
 # --- РАЗДАЧА СТАТИКИ ---
 app.mount("/js", StaticFiles(directory="js"), name="js")

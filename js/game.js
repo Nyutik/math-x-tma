@@ -37,7 +37,7 @@ const I18N = {
         theme_sunset: "Закат", theme_sunset_desc: "Теплый летний вечер",
         theme_neon: "Неон", theme_neon_desc: "Кислотные цвета будущего",
         level_select: "Выберите уровень", level_complete: "УРОВЕНЬ ПРОЙДЕН!", close: "ЗАКРЫТЬ",
-        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> и Кристалл", battle_lobby: "Режим Битвы", player_name: "Игрок"
+        daily_reward_desc: "+200 <span class='coin-icon' aria-hidden='true' style='width:14px; height:14px;'></span> и Кристалл", battle_lobby: "Режим Битвы", player_name: "Игрок"
     },
     en: {
         play: "PLAY", daily_level: "CHALLENGE", battle: "BATTLE", shop: "SHOP", stats: "STATS",
@@ -74,7 +74,7 @@ const I18N = {
         theme_neon: "Neon", theme_neon_desc: "Acid colors of future",
         level_select: "Select Level", level_complete: "LEVEL COMPLETED!", close: "CLOSE", download: "Download",
         rules_text_7: "7. <b>Gallery:</b> Solve levels to unlock puzzle pieces of art. A fully assembled art can be downloaded!",
-        daily_reward_desc: "+200 <i data-lucide='coins' style='width: 14px; height: 14px;'></i> & Crystal", battle_lobby: "Battle Lobby", player_name: "Player"
+        daily_reward_desc: "+200 <span class='coin-icon' aria-hidden='true' style='width:14px; height:14px;'></span> & Crystal", battle_lobby: "Battle Lobby", player_name: "Player"
     }
 };
 
@@ -118,7 +118,11 @@ let state = {
     lastGeneratedGrid: null,
     isFrozen: false,
     diff: 'easy',
-    currentLevelNum: 1
+    currentLevelNum: 1,
+    battleStake: 0,
+    battleBotDiff: null,
+    pendingPvp: null,
+    externalNavigationUntil: 0
 };
 
 const tg = window.Telegram?.WebApp || { 
@@ -129,6 +133,9 @@ const tg = window.Telegram?.WebApp || {
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
 const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/math/ws/pvp` : `ws://${window.location.host}/ws/pvp`;
+const BOT_USERNAME = 'mathx_infinity_bot';
+const MINI_APP_SHORT_NAME = 'app';
+const COIN_ICON_HTML = '<span class="coin-icon" aria-hidden="true"></span>';
 console.log('🚀 MathX v5.0 Loaded - API:', API_URL);
 
 // --- PVP Client ---
@@ -158,6 +165,14 @@ const PVPClient = {
             this.roomId = msg.room_id;
             showToast(state.lang === 'ru' ? 'Ожидание соперника...' : 'Waiting for opponent...');
         } else if (msg.status === 'start') {
+            if (state.pendingPvp && !state.pendingPvp.stakeCharged) {
+                state.coins -= state.pendingPvp.stake;
+                state.battleStake = state.pendingPvp.stake;
+                state.pendingPvp.stakeCharged = true;
+                addTransaction('spent', 'battle', state.pendingPvp.stake);
+                saveData();
+                updateUI();
+            }
             this.opponentData = Object.values(msg.players).find(p => p.name !== (tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name));
             showToast(state.lang === 'ru' ? 'Битва начинается!' : 'Battle starts!');
             Haptics.success();
@@ -168,6 +183,7 @@ const PVPClient = {
             if (fill) fill.style.width = `${msg.progress}%`;
             if (text) text.textContent = `${Math.round(msg.progress)}%`;
         } else if (msg.status === 'game_over') {
+            state.pendingPvp = null;
             if (msg.winner_id === ServerAPI.getTId()) {
                 // We won handled locally
             } else {
@@ -229,8 +245,8 @@ const ServerAPI = {
             return null; 
         }
     },
-    async auth(user) { 
-        return this.call('/auth', 'POST', { telegram_id: user.id, username: user.username, display_name: user.first_name }); 
+    async auth(user, extra = {}) { 
+        return this.call('/auth', 'POST', { telegram_id: user.id, username: user.username, display_name: user.first_name, ...extra }); 
     },
     async getStats() { return this.call(`/stats/${this.getTId()}`); },
     async getMissions() { return this.call(`/missions/${this.getTId()}`); },
@@ -386,7 +402,7 @@ function updateUI() {
         if (!bonusAvailable) {
             modalClaimBtn.innerHTML = state.lang === 'ru' ? 'ПОЛУЧЕНО' : 'CLAIMED';
         } else {
-            modalClaimBtn.innerHTML = `<span data-i18n="claim">${I18N[state.lang].claim}</span> <span id="reward-amount">50</span> 🪙`;
+            modalClaimBtn.innerHTML = `<span data-i18n="claim">${I18N[state.lang].claim}</span> <span id="reward-amount">50</span> ${COIN_ICON_HTML}`;
         }
     }
 
@@ -436,28 +452,55 @@ function addTransaction(type, category, amount) {
     state.transactions[type][category][today] += amount;
 }
 
+function getTelegramStartParam() {
+    const tgParam = tg.initDataUnsafe?.start_param;
+    if (tgParam) return tgParam;
+
+    const search = new URLSearchParams(window.location.search);
+    return search.get('tgWebAppStartParam') || search.get('startapp') || search.get('start_param') || '';
+}
+
+function parseLaunchData(startParam) {
+    if (!startParam) return null;
+    if (startParam.startsWith('duel_')) {
+        const parts = startParam.split('_');
+        return {
+            type: 'duel',
+            roomId: parts[1],
+            diff: parts[2] || 'easy',
+            stake: parseInt(parts[3] || '50', 10)
+        };
+    }
+    if (startParam.startsWith('ref_')) {
+        const referrerId = parseInt(startParam.slice(4), 10);
+        if (!Number.isNaN(referrerId)) return { type: 'ref', referrerId };
+    }
+    return null;
+}
+
+function buildMiniAppLink(startParam = '') {
+    const base = `https://t.me/${BOT_USERNAME}/${MINI_APP_SHORT_NAME}`;
+    if (!startParam) return base;
+    return `${base}?startapp=${encodeURIComponent(startParam)}`;
+}
+
+function markExternalNavigation() {
+    state.externalNavigationUntil = Date.now() + 12000;
+}
+
+function openTelegramShare(targetUrl, shareText) {
+    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
+    markExternalNavigation();
+    if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
+    else window.open(tgLink, '_blank', 'noopener');
+}
+
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
-    
-    // Check for duel link
-    const startParam = tg.initDataUnsafe?.start_param;
-    if (startParam && startParam.startsWith('duel_')) {
-        const parts = startParam.split('_');
-        const roomId = parts[1];
-        const diff = parts[2] || 'easy';
-        const stake = parseInt(parts[3] || '50');
-        
-        if (state.coins < stake) {
-            showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
-        } else {
-            state.coins -= stake;
-            state.battleStake = stake;
-            state.battleBotDiff = null; // Real PvP
-            PVPClient.joinRoom(roomId, diff);
-        }
-    }
 
-    const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 });
+    const launchData = parseLaunchData(getTelegramStartParam());
+    const authExtras = launchData?.type === 'ref' ? { referred_by: launchData.referrerId } : {};
+    const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 }, authExtras);
     if (serverData?.user) {
         const u = serverData.user;
         state.coins = Math.max(state.coins, u.coins || 0);
@@ -492,6 +535,22 @@ window.onload = async () => {
     updateUI();
     initApp();
     initShop();
+
+    if (launchData?.type === 'duel') {
+        if (state.coins < launchData.stake) {
+            showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
+        } else {
+            state.battleStake = launchData.stake;
+            state.battleBotDiff = null;
+            state.pendingPvp = {
+                roomId: launchData.roomId,
+                diff: launchData.diff,
+                stake: launchData.stake,
+                stakeCharged: false
+            };
+            PVPClient.joinRoom(launchData.roomId, launchData.diff);
+        }
+    }
 };
 
 function safeSetClick(id, fn) { 
@@ -559,20 +618,11 @@ function initApp() {
     safeSetClick('magnet-btn', useMagnet);
 
     safeSetClick('invite-btn', () => {
-        const inviteText = encodeURIComponent(state.lang === 'ru' ? "Спорим, не решишь эту математическую головоломку? Присоединяйся!" : "Bet you can't solve this math puzzle! Join now!");
-        const botUrl = encodeURIComponent("https://t.me/mathx_infinity_bot");
-        const tgLink = `https://t.me/share/url?url=${botUrl}&text=${inviteText}`;
-        if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
-        else window.open(tgLink, '_blank');
-        
-        if (!localStorage.getItem('mx_invited')) {
-            state.coins += 100;
-            addTransaction('earned', 'invite', 100);
-            localStorage.setItem('mx_invited', 'true');
-            saveData(); updateUI();
-            showToast('+100 🪙');
-            Haptics.success();
-        }
+        const inviteText = state.lang === 'ru'
+            ? 'Спорим, не решишь эту математическую головоломку? Присоединяйся!'
+            : "Bet you can't solve this math puzzle! Join now!";
+        const inviteUrl = buildMiniAppLink(`ref_${ServerAPI.getTId()}`);
+        openTelegramShare(inviteUrl, inviteText);
     });
 
     safeSetClick('claim-btn', function() {
@@ -666,19 +716,17 @@ function initApp() {
             
             const roomId = Math.random().toString(36).substring(2, 10);
             const diff = state.currentDiffTab || 'easy';
-            // IMPORTANT: Format for Mini App with short_name 'app'
-            const duelLink = `https://t.me/mathx_infinity_bot/app?startapp=duel_${roomId}_${diff}_${stake}`;
-            const inviteText = encodeURIComponent(state.lang === 'ru' ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.` : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`);
-            const tgLink = `https://t.me/share/url?url=${encodeURIComponent(duelLink)}&text=${inviteText}`;
-            
-            state.coins -= stake;
+            const duelLink = buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
+            const inviteText = state.lang === 'ru'
+                ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.`
+                : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`;
+
             state.battleStake = stake;
-            state.battleBotDiff = null; // Real PvP
+            state.battleBotDiff = null;
+            state.pendingPvp = { roomId, diff, stake, stakeCharged: false };
             PVPClient.joinRoom(roomId, diff);
-            
-            if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
-            else window.open(tgLink, '_blank');
-            saveData(); updateUI();
+
+            openTelegramShare(duelLink, inviteText);
         };
     });
 
@@ -778,7 +826,6 @@ function initShop() {
 
             Haptics.success();
             saveData(); updateUI(); updateShopButtons();
-            if (window.lucide) lucide.createIcons();
         };
     });
     updateShopButtons();
@@ -1058,7 +1105,7 @@ function checkWin() {
     
     const winRewardText = document.getElementById('win-reward-text');
     if (winRewardText) {
-        let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} 🪙</span>`;
+        let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} ${COIN_ICON_HTML}</span>`;
         if (state.isDaily) {
             rewardText += ` <span style="color:#a855f7; font-size:1.2rem; text-shadow:0 0 10px #a855f7;">+1 💎</span>`;
         }
@@ -1103,7 +1150,7 @@ function startTimer() {
             updateTimerUI();
         }
     }, 1000);
-    if (state.isBattle) startBot();
+    if (state.isBattle && state.battleBotDiff) startBot();
 }
 
 function updateTimerUI() {
@@ -1211,7 +1258,7 @@ function updateBonusModal() {
             streakDisplay.innerHTML = '🔥 ' + (currentStreak + 1) + (state.lang === 'ru' ? ' дней подряд!' : ' days in a row!');
             rewardAmount.textContent = bonus;
             claimBtn.classList.remove('disabled');
-            claimBtn.innerHTML = '<span data-i18n="claim">' + (state.lang === 'ru' ? 'ПОЛУЧИТЬ' : 'CLAIM') + '</span> <span id="reward-amount">' + bonus + '</span> <i data-lucide="coins" style="width:18px; height:18px; vertical-align:middle; margin-left:4px;"></i>';
+        claimBtn.innerHTML = '<span data-i18n="claim">' + (state.lang === 'ru' ? 'ПОЛУЧИТЬ' : 'CLAIM') + '</span> <span id="reward-amount">' + bonus + '</span> ' + COIN_ICON_HTML;
         }
         
         if (window.lucide) lucide.createIcons();
@@ -1537,7 +1584,7 @@ function checkAndClaimMissions() {
         saveData(); updateUI();
         if (totalReward > 0) {
             const missionText = missionNames.join(', ');
-            showToast('+' + totalReward + ' 🪙 ' + (state.lang === 'ru' ? 'за:' : 'from:') + ' ' + missionText);
+            showToast('+' + totalReward + ' ' + (state.lang === 'ru' ? 'монет за:' : 'coins from:') + ' ' + missionText);
         }
     }
 }
@@ -1681,6 +1728,12 @@ function renderNumberPad() {
 }
 
 document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        state.externalNavigationUntil = 0;
+    }
+    if (document.hidden && state.externalNavigationUntil > Date.now()) {
+        return;
+    }
     if (document.hidden && state.isGameActive && !state.isBattle) {
         pauseGame();
         saveCurrentToSession(true);

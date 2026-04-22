@@ -13,22 +13,42 @@ from dotenv import load_dotenv
 from datetime import datetime
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
+from aiogram.filters.command import CommandObject
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 load_dotenv()
 
+# --- DATABASE CONFIG ---
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key) if url and key else None
+
 # --- BOT CONFIG ---
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://t.me/mathx_infinity_bot/play")
+BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "mathx_infinity_bot")
+MINI_APP_SHORT_NAME = os.environ.get("TELEGRAM_MINI_APP_SHORT_NAME", "app")
+WEBAPP_URL = os.environ.get("WEBAPP_URL")
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher() if BOT_TOKEN else None
 
 if dp:
+    def build_mini_app_url(start_param: Optional[str] = None) -> str:
+        if WEBAPP_URL:
+            if start_param:
+                separator = "&" if "?" in WEBAPP_URL else "?"
+                return f"{WEBAPP_URL}{separator}startapp={start_param}"
+            return WEBAPP_URL
+        base_url = f"https://t.me/{BOT_USERNAME}/{MINI_APP_SHORT_NAME}"
+        if start_param:
+            return f"{base_url}?startapp={start_param}"
+        return base_url
+
     @dp.message(Command("start"))
-    async def cmd_start(message: types.Message):
+    async def cmd_start(message: types.Message, command: CommandObject):
         lang = message.from_user.language_code or "en"
-        name = message.from_user.first_name
+        name = message.from_user.first_name or "Player"
+        start_param = command.args if command and command.args else None
         
         texts = {
             "ru": {
@@ -42,26 +62,24 @@ if dp:
         }
         
         t = texts.get(lang[:2], texts["en"])
+        launch_url = build_mini_app_url(start_param)
         
         builder = InlineKeyboardBuilder()
         builder.row(types.InlineKeyboardButton(
             text=t["btn"], 
-            web_app=types.WebAppInfo(url=WEBAPP_URL)
+            url=launch_url
         ))
         
-        # Попробуем отправить с картинкой, если файл существует
         photo_path = "images/square_icon.jpeg"
         if os.path.exists(photo_path):
             try:
                 from aiogram.types import FSInputFile
-                photo = FSInputFile(photo_path)
                 await message.answer_photo(
-                    photo=photo,
+                    photo=FSInputFile(photo_path),
                     caption=t["cap"],
                     reply_markup=builder.as_markup()
                 )
-            except Exception as e:
-                print(f"Error sending photo: {e}")
+            except Exception:
                 await message.answer(t["cap"], reply_markup=builder.as_markup())
         else:
             await message.answer(t["cap"], reply_markup=builder.as_markup())
@@ -129,10 +147,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
-
 class UserAuth(BaseModel):
     telegram_id: int
     username: Optional[str] = None
@@ -178,7 +192,27 @@ async def auth_user(user: UserAuth):
                 "coins": 100, "xp": 0, "level": 1,
                 "unlocked_easy": 1, "unlocked_medium": 1, "unlocked_hard": 1, "unlocked_expert": 1
             }
-            res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
+            referral_applied = bool(user.referred_by and user.referred_by != user.telegram_id)
+            if referral_applied:
+                new_user["referred_by"] = user.referred_by
+            try:
+                res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
+            except Exception:
+                if "referred_by" in new_user:
+                    del new_user["referred_by"]
+                    referral_applied = False
+                    res = supabase.schema("mathx").table("profiles").insert(new_user).execute()
+                else:
+                    raise
+            if referral_applied:
+                try:
+                    inviter_res = supabase.schema("mathx").table("profiles").select("coins").eq("telegram_id", user.referred_by).single().execute()
+                    inviter_coins = inviter_res.data.get("coins", 0) if inviter_res and inviter_res.data else 0
+                    supabase.schema("mathx").table("profiles").update({
+                        "coins": inviter_coins + 100
+                    }).eq("telegram_id", user.referred_by).execute()
+                except Exception:
+                    print("Referral bonus skipped")
             return {"status": "created", "user": res.data[0]}
     except Exception as e:
         print("!!! AUTH ERROR !!!")

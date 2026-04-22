@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.filters.command import CommandObject
@@ -96,6 +96,7 @@ async def on_startup():
         # Запускаем бота в фоновом режиме
         asyncio.create_task(dp.start_polling(bot))
         print("🤖 Telegram Bot started")
+    asyncio.create_task(pvp_room_watcher())
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -104,13 +105,22 @@ async def on_shutdown():
 
 # --- PVP Room Manager ---
 class PVPRoom:
-    def __init__(self, room_id: str, difficulty: str = "easy"):
+    def __init__(self, room_id: str, difficulty: str = "easy", stake: int = 50):
         self.room_id = room_id
         self.difficulty = difficulty
+        self.stake = stake
         self.players: Dict[int, WebSocket] = {}
         self.player_data: Dict[int, dict] = {} # Progress, names
         self.grid_data = None
         self.is_started = False
+        self.status = "waiting"
+        self.created_at = datetime.utcnow()
+        self.started_at: Optional[datetime] = None
+        self.finished_at: Optional[datetime] = None
+        self.seed = room_id
+        self.bank_committed = False
+        self.winner_id: Optional[int] = None
+        self.rematch_votes: set[int] = set()
 
 class PVPManager:
     def __init__(self):
@@ -119,6 +129,12 @@ class PVPManager:
 
     async def connect(self, websocket: WebSocket, player_id: int):
         await websocket.accept()
+
+    def get_room(self, player_id: int) -> Optional[PVPRoom]:
+        room_id = self.player_to_room.get(player_id)
+        if not room_id:
+            return None
+        return self.rooms.get(room_id)
         
     def disconnect(self, player_id: int):
         if player_id in self.player_to_room:
@@ -128,6 +144,7 @@ class PVPManager:
                     del self.rooms[room_id].players[player_id]
                 if player_id in self.rooms[room_id].player_data:
                     del self.rooms[room_id].player_data[player_id]
+                self.rooms[room_id].rematch_votes.discard(player_id)
                 if not self.rooms[room_id].players:
                     del self.rooms[room_id]
             del self.player_to_room[player_id]
@@ -142,6 +159,18 @@ class PVPManager:
                     disconnected.append(pid)
             for pid in disconnected:
                 self.disconnect(pid)
+
+    async def send_lobby_state(self, room: PVPRoom):
+        await self.broadcast_to_room(room.room_id, {
+            "status": "lobby",
+            "room_id": room.room_id,
+            "player_count": len(room.players),
+            "players": room.player_data,
+            "ready_players": {str(pid): bool(data.get("ready")) for pid, data in room.player_data.items()},
+            "stake": room.stake,
+            "difficulty": room.difficulty,
+            "room_status": room.status
+        })
 
 pvp_manager = PVPManager()
 
@@ -184,6 +213,18 @@ class GameScore(BaseModel):
 class MissionClaim(BaseModel):
     telegram_id: int
     mission_id: str
+
+def get_profile_by_tid(telegram_id: int):
+    return supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", telegram_id).single().execute()
+
+def add_coins(telegram_id: int, amount: int):
+    profile_res = get_profile_by_tid(telegram_id)
+    current_coins = profile_res.data.get("coins", 0) if profile_res and profile_res.data else 0
+    new_total = current_coins + amount
+    if new_total < 0:
+        raise ValueError("insufficient_coins")
+    supabase.schema("mathx").table("profiles").update({"coins": new_total}).eq("telegram_id", telegram_id).execute()
+    return new_total
 
 @app.post("/auth")
 async def auth_user(user: UserAuth):
@@ -333,6 +374,53 @@ async def claim_mission(data: MissionClaim):
     except:
         return {"status": "error"}
 
+async def pvp_room_watcher():
+    while True:
+        await asyncio.sleep(5)
+        now = datetime.utcnow()
+        expired = []
+        for room_id, room in list(pvp_manager.rooms.items()):
+            if room.status in {"waiting", "ready"} and now - room.created_at > timedelta(minutes=2):
+                await pvp_manager.broadcast_to_room(room_id, {"status": "timeout", "room_id": room_id})
+                expired.append(room_id)
+            elif room.status == "active" and room.started_at and now - room.started_at > timedelta(minutes=10):
+                winner_id = None
+                winner_total = None
+                players_progress = sorted(
+                    [(pid, room.player_data.get(pid, {}).get("progress", 0)) for pid in room.players.keys()],
+                    key=lambda item: item[1],
+                    reverse=True
+                )
+                if len(players_progress) >= 2 and players_progress[0][1] != players_progress[1][1]:
+                    winner_id = players_progress[0][0]
+                    try:
+                        winner_total = add_coins(winner_id, room.stake * 2)
+                    except Exception:
+                        winner_total = None
+                elif room.bank_committed:
+                    for pid in room.players.keys():
+                        try:
+                            add_coins(pid, room.stake)
+                        except Exception:
+                            pass
+                room.status = "finished"
+                room.finished_at = now
+                room.winner_id = winner_id
+                await pvp_manager.broadcast_to_room(room_id, {
+                    "status": "timeout",
+                    "room_id": room_id,
+                    "winner_id": winner_id,
+                    "winner_coins": winner_total
+                })
+                expired.append(room_id)
+            elif room.status in {"finished", "cancelled"} and room.finished_at and now - room.finished_at > timedelta(minutes=1):
+                expired.append(room_id)
+        for room_id in expired:
+            room = pvp_manager.rooms.pop(room_id, None)
+            if room:
+                for pid in list(room.players.keys()):
+                    pvp_manager.player_to_room.pop(pid, None)
+
 # --- PVP WEBSOCKET ---
 @app.websocket("/ws/pvp/{player_id}")
 async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
@@ -347,33 +435,81 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                 if not room_id: continue
                 
                 if room_id not in pvp_manager.rooms:
-                    pvp_manager.rooms[room_id] = PVPRoom(room_id, data.get("difficulty", "easy"))
+                    pvp_manager.rooms[room_id] = PVPRoom(
+                        room_id,
+                        data.get("difficulty", "easy"),
+                        int(data.get("stake", 50))
+                    )
                 
                 room = pvp_manager.rooms[room_id]
-                if room.is_started or len(room.players) >= 2:
+                if room.status in {"active", "finished", "cancelled"} or len(room.players) >= 2:
                     await websocket.send_json({"status": "room_unavailable", "room_id": room_id})
                     continue
                 room.players[player_id] = websocket
-                room.player_data[player_id] = {"name": data.get("name", "Player"), "progress": 0}
+                room.player_data[player_id] = {
+                    "name": data.get("name", "Player"),
+                    "progress": 0,
+                    "ready": False
+                }
                 pvp_manager.player_to_room[player_id] = room_id
-                
-                if len(room.players) == 2:
-                    room.is_started = True
-                    # In a real app, generate grid once here and send to both
-                    await pvp_manager.broadcast_to_room(room_id, {
-                        "status": "start",
-                        "room_id": room_id,
-                        "difficulty": room.difficulty,
-                        "players": room.player_data,
-                        "seed": room_id # Use room_id as seed for identical grid
-                    })
-                else:
-                    await websocket.send_json({"status": "joined", "room_id": room_id})
+                room.status = "ready" if len(room.players) == 2 else "waiting"
+                await websocket.send_json({"status": "joined", "room_id": room_id})
+                await pvp_manager.send_lobby_state(room)
+
+            elif action == "ready":
+                room = pvp_manager.get_room(player_id)
+                if not room or player_id not in room.player_data:
+                    continue
+                room.player_data[player_id]["ready"] = True
+                room.status = "ready"
+                await pvp_manager.send_lobby_state(room)
+
+                if len(room.players) == 2 and all(player.get("ready") for player in room.player_data.values()):
+                    try:
+                        if not room.bank_committed:
+                            for pid in room.players.keys():
+                                add_coins(pid, -room.stake)
+                            room.bank_committed = True
+                        room.is_started = True
+                        room.status = "active"
+                        room.started_at = datetime.utcnow()
+                        room.seed = f"{room.room_id}:{int(room.started_at.timestamp())}"
+                        for data_item in room.player_data.values():
+                            data_item["ready"] = False
+                        await pvp_manager.broadcast_to_room(room.room_id, {
+                            "status": "start",
+                            "room_id": room.room_id,
+                            "difficulty": room.difficulty,
+                            "players": room.player_data,
+                            "seed": room.seed,
+                            "stake": room.stake
+                        })
+                    except ValueError:
+                        await pvp_manager.broadcast_to_room(room.room_id, {
+                            "status": "cancelled",
+                            "room_id": room.room_id,
+                            "reason": "insufficient_coins"
+                        })
+                        room.status = "cancelled"
+                        room.finished_at = datetime.utcnow()
+
+            elif action == "cancel_room":
+                room = pvp_manager.get_room(player_id)
+                if not room:
+                    continue
+                room.status = "cancelled"
+                room.finished_at = datetime.utcnow()
+                await pvp_manager.broadcast_to_room(room.room_id, {
+                    "status": "cancelled",
+                    "room_id": room.room_id
+                })
 
             elif action == "update_progress":
                 room_id = pvp_manager.player_to_room.get(player_id)
                 if room_id and room_id in pvp_manager.rooms:
                     room = pvp_manager.rooms[room_id]
+                    if room.status != "active":
+                        continue
                     room.player_data[player_id]["progress"] = data.get("progress", 0)
                     for pid, ws in room.players.items():
                         if pid != player_id:
@@ -388,22 +524,92 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
             elif action == "win":
                 room_id = pvp_manager.player_to_room.get(player_id)
                 if room_id:
+                    room = pvp_manager.rooms.get(room_id)
+                    if not room or room.status != "active" or room.winner_id is not None:
+                        continue
+                    room.winner_id = player_id
+                    room.status = "finished"
+                    room.finished_at = datetime.utcnow()
+                    try:
+                        winner_total = add_coins(player_id, room.stake * 2)
+                    except Exception:
+                        winner_total = None
                     await pvp_manager.broadcast_to_room(room_id, {
                         "status": "game_over",
-                        "winner_id": player_id
+                        "winner_id": player_id,
+                        "stake": room.stake,
+                        "winner_coins": winner_total
+                    })
+
+            elif action == "rematch":
+                room = pvp_manager.get_room(player_id)
+                if not room or room.status != "finished":
+                    continue
+                room.rematch_votes.add(player_id)
+                if len(room.rematch_votes) == 2 and len(room.players) == 2:
+                    room.status = "ready"
+                    room.is_started = False
+                    room.started_at = None
+                    room.finished_at = None
+                    room.winner_id = None
+                    room.bank_committed = False
+                    room.seed = room.room_id
+                    for data_item in room.player_data.values():
+                        data_item["progress"] = 0
+                        data_item["ready"] = False
+                    room.rematch_votes.clear()
+                    await pvp_manager.send_lobby_state(room)
+                else:
+                    await pvp_manager.broadcast_to_room(room.room_id, {
+                        "status": "rematch_waiting",
+                        "room_id": room.room_id
                     })
 
     except WebSocketDisconnect:
         room_id = pvp_manager.player_to_room.get(player_id)
         pvp_manager.disconnect(player_id)
         if room_id and room_id in pvp_manager.rooms and pvp_manager.rooms[room_id].players:
-            await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
+            room = pvp_manager.rooms[room_id]
+            if room.status == "active" and room.bank_committed and room.winner_id is None and len(room.players) == 1:
+                remaining_player = next(iter(room.players.keys()))
+                room.winner_id = remaining_player
+                room.status = "finished"
+                room.finished_at = datetime.utcnow()
+                try:
+                    winner_total = add_coins(remaining_player, room.stake * 2)
+                except Exception:
+                    winner_total = None
+                await pvp_manager.broadcast_to_room(room_id, {
+                    "status": "game_over",
+                    "winner_id": remaining_player,
+                    "stake": room.stake,
+                    "winner_coins": winner_total
+                })
+            else:
+                await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
     except Exception as e:
         print(f"WS Error: {e}")
         room_id = pvp_manager.player_to_room.get(player_id)
         pvp_manager.disconnect(player_id)
         if room_id and room_id in pvp_manager.rooms and pvp_manager.rooms[room_id].players:
-            await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
+            room = pvp_manager.rooms[room_id]
+            if room.status == "active" and room.bank_committed and room.winner_id is None and len(room.players) == 1:
+                remaining_player = next(iter(room.players.keys()))
+                room.winner_id = remaining_player
+                room.status = "finished"
+                room.finished_at = datetime.utcnow()
+                try:
+                    winner_total = add_coins(remaining_player, room.stake * 2)
+                except Exception:
+                    winner_total = None
+                await pvp_manager.broadcast_to_room(room_id, {
+                    "status": "game_over",
+                    "winner_id": remaining_player,
+                    "stake": room.stake,
+                    "winner_coins": winner_total
+                })
+            else:
+                await pvp_manager.broadcast_to_room(room_id, {"status": "opponent_left", "room_id": room_id})
 
 # --- РАЗДАЧА СТАТИКИ ---
 app.mount("/js", StaticFiles(directory="js"), name="js")

@@ -243,7 +243,14 @@
                             <button class="duel-invite-btn" data-stake="50" style="padding: 12px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,242,255,0.1); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                         <i data-lucide="share-2" style="width:16px; height:16px;"></i> <span data-i18n="invite_duel">Вызвать на дуэль</span> (50 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>)
                             </button>
+                            <button id="battle-ready-btn" style="padding: 12px; border-radius: 12px; border: 1px solid var(--success-color); background: rgba(0,255,136,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
+                                Готов
+                            </button>
+                            <button id="battle-cancel-btn" style="padding: 12px; border-radius: 12px; border: 1px solid #ff6b6b; background: rgba(255,107,107,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
+                                Отменить ожидание
+                            </button>
                         </div>
+                        <p id="battle-lobby-status" style="margin: 14px 0 0; color: var(--text-dim); font-size: 0.8rem; min-height: 1.2em;"></p>
                     </div>
                 </div>
             </div>
@@ -253,6 +260,9 @@
                 <h2 style="color:var(--success-color); font-size:2rem; margin-bottom: 10px;" data-i18n="battle_win">ВЫ ПОБЕДИЛИ!</h2>
                 <div style="font-size: 3rem; margin: 20px 0;">🏆</div>
             <p style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"><span data-i18n="reward">Награда:</span> <span id="battle-reward" style="color:var(--gold);">100</span> <span class="coin-icon" aria-hidden="true" style="width:16px; height:16px;"></span></p>
+                <button class="claim-btn-large" id="battle-rematch-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--success-color); color:#000; font-weight:bold; font-size:1.05rem; cursor:pointer; margin-bottom:12px;">
+                    Реванш
+                </button>
                 <button class="claim-btn-large btn-close-modal" id="claim-battle-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--accent); font-weight:bold; font-size:1.1rem; cursor:pointer;">
                     <span data-i18n="close">ЗАКРЫТЬ</span>
                 </button>
@@ -263,6 +273,9 @@
                 <h2 style="color:#ff4757; font-size:2rem; margin-bottom: 10px;" data-i18n="battle_lose">ВЫ ПРОИГРАЛИ</h2>
                 <div style="font-size: 3rem; margin: 20px 0;">💀</div>
                 <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; color: var(--text-dim);" data-i18n="bot_faster">Противник оказался быстрее!</p>
+                <button class="claim-btn-large" id="battle-rematch-lost-btn" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--success-color); color:#000; font-weight:bold; font-size:1.05rem; cursor:pointer; margin-bottom:12px;">
+                    Реванш
+                </button>
                 <button class="claim-btn-large btn-close-modal" style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--card-onyx); color: var(--text); border: 1px solid var(--glass-border); font-weight:bold; font-size:1.1rem; cursor:pointer;">
                     <span data-i18n="close">ЗАКРЫТЬ</span>
                 </button>

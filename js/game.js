@@ -143,6 +143,7 @@ const PVPClient = {
     socket: null,
     roomId: null,
     opponentData: null,
+    readyPlayers: {},
     
     connect() {
         if (this.socket) return;
@@ -163,35 +164,67 @@ const PVPClient = {
     handleMessage(msg) {
         if (msg.status === 'joined') {
             this.roomId = msg.room_id;
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка активна. Ожидаем соперника...' : 'Invite is active. Waiting for opponent...');
             showToast(state.lang === 'ru' ? 'Ожидание соперника...' : 'Waiting for opponent...');
         } else if (msg.status === 'start') {
-            if (state.pendingPvp && !state.pendingPvp.stakeCharged) {
-                state.coins -= state.pendingPvp.stake;
-                state.battleStake = state.pendingPvp.stake;
-                state.pendingPvp.stakeCharged = true;
-                addTransaction('spent', 'battle', state.pendingPvp.stake);
-                saveData();
-                updateUI();
-            }
+            state.battleStake = msg.stake || state.pendingPvp?.stake || state.battleStake;
+            if (state.pendingPvp && !state.pendingPvp.stakeCharged) state.pendingPvp.stakeCharged = true;
+            setBattleLobbyStatus('');
             this.opponentData = Object.values(msg.players).find(p => p.name !== (tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name));
             showToast(state.lang === 'ru' ? 'Битва начинается!' : 'Battle starts!');
             Haptics.success();
+            refreshProfileState();
             startLevel(msg.difficulty || 'easy', 'BATTLE', msg.seed);
         } else if (msg.status === 'opponent_update') {
             const fill = document.getElementById('opponent-progress-fill');
             const text = document.getElementById('opponent-progress-text');
             if (fill) fill.style.width = `${msg.progress}%`;
             if (text) text.textContent = `${Math.round(msg.progress)}%`;
+        } else if (msg.status === 'lobby') {
+            this.roomId = msg.room_id;
+            this.readyPlayers = msg.ready_players || {};
+            const readyCount = Object.values(this.readyPlayers).filter(Boolean).length;
+            setBattleLobbyStatus(state.lang === 'ru'
+                ? `Игроки в комнате: ${msg.player_count}/2. Готовы: ${readyCount}/2`
+                : `Players in room: ${msg.player_count}/2. Ready: ${readyCount}/2`);
+        } else if (msg.status === 'cancelled') {
+            state.pendingPvp = null;
+            this.roomId = null;
+            const cancelText = msg.reason === 'insufficient_coins'
+                ? (state.lang === 'ru' ? 'У одного из игроков не хватило монет.' : 'One of the players does not have enough coins.')
+                : (state.lang === 'ru' ? 'Ожидание отменено.' : 'Waiting cancelled.');
+            setBattleLobbyStatus(cancelText);
+            refreshProfileState();
+            showToast(cancelText);
+        } else if (msg.status === 'timeout') {
+            state.pendingPvp = null;
+            this.roomId = null;
+            refreshProfileState();
+            if (msg.winner_id === ServerAPI.getTId()) {
+                const rewardEl = document.getElementById('battle-reward');
+                if (rewardEl && state.battleStake) rewardEl.textContent = String(state.battleStake * 2);
+                setBattleLobbyStatus('');
+                showModal('battle-result');
+            } else {
+                setBattleLobbyStatus(state.lang === 'ru' ? 'Комната закрыта по таймауту.' : 'Room closed by timeout.');
+                showToast(state.lang === 'ru' ? 'Таймаут ожидания дуэли.' : 'Duel lobby timed out.');
+            }
         } else if (msg.status === 'room_unavailable') {
             state.pendingPvp = null;
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Эта комната уже занята или завершена.' : 'This duel room is already busy or finished.');
             showToast(state.lang === 'ru' ? 'Комната уже недоступна.' : 'This duel room is unavailable.');
         } else if (msg.status === 'opponent_left') {
             state.pendingPvp = null;
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Соперник вышел. Можно отправить новую ссылку.' : 'Opponent left. You can send a new invite.');
             if (!state.isBattle) {
                 showToast(state.lang === 'ru' ? 'Соперник вышел из лобби.' : 'Opponent left the lobby.');
             }
         } else if (msg.status === 'game_over') {
             state.pendingPvp = null;
+            setBattleLobbyStatus('');
+            refreshProfileState();
+            const rewardEl = document.getElementById('battle-reward');
+            if (rewardEl && msg.stake) rewardEl.textContent = String(msg.stake * 2);
             if (msg.winner_id === ServerAPI.getTId()) {
                 // We won handled locally
             } else {
@@ -199,6 +232,8 @@ const PVPClient = {
                 clearInterval(state.timerInterval);
                 showModal('battle-lost');
             }
+        } else if (msg.status === 'rematch_waiting') {
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Ждём подтверждение реванша от второго игрока...' : 'Waiting for the second player to accept rematch...');
         }
     },
     
@@ -210,6 +245,7 @@ const PVPClient = {
                     action: 'join_room',
                     room_id: roomId,
                     difficulty: diff,
+                    stake: state.pendingPvp?.stake || state.battleStake || 50,
                     name: tg.initDataUnsafe?.user?.first_name || I18N[state.lang].player_name
                 }));
                 clearInterval(wait);
@@ -220,6 +256,24 @@ const PVPClient = {
     sendProgress(p) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({ action: 'update_progress', progress: p }));
+        }
+    },
+
+    sendReady() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN && this.roomId) {
+            this.socket.send(JSON.stringify({ action: 'ready', room_id: this.roomId }));
+        }
+    },
+
+    cancelRoom() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN && this.roomId) {
+            this.socket.send(JSON.stringify({ action: 'cancel_room', room_id: this.roomId }));
+        }
+    },
+
+    requestRematch() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN && this.roomId) {
+            this.socket.send(JSON.stringify({ action: 'rematch', room_id: this.roomId }));
         }
     },
     
@@ -313,8 +367,12 @@ function applyLanguage() {
 
 function applyTheme(t) { 
     state.theme = t;
-    if (document.body.className !== `theme-${t}`) {
-        document.body.className = `theme-${t}`; 
+    const bodyClasses = [];
+    if (ServerAPI.isTelegram) bodyClasses.push('telegram-mini-app');
+    bodyClasses.push(`theme-${t}`);
+    const nextClassName = bodyClasses.join(' ');
+    if (document.body.className !== nextClassName) {
+        document.body.className = nextClassName;
     }
     localStorage.setItem('mx_theme', t);
     document.querySelectorAll('.theme-circle').forEach(c => {
@@ -503,6 +561,21 @@ function openTelegramShare(targetUrl, shareText) {
     else window.open(tgLink, '_blank', 'noopener');
 }
 
+function setBattleLobbyStatus(message = '') {
+    const statusEl = document.getElementById('battle-lobby-status');
+    if (statusEl) statusEl.textContent = message;
+}
+
+async function refreshProfileState() {
+    const data = await ServerAPI.getStats();
+    if (!data) return;
+    if (typeof data.coins === 'number') state.coins = data.coins;
+    if (typeof data.xp === 'number') state.xp = data.xp;
+    if (typeof data.level === 'number') state.level = data.level;
+    saveData();
+    updateUI();
+}
+
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
 
@@ -548,6 +621,8 @@ window.onload = async () => {
         if (state.coins < launchData.stake) {
             showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
         } else {
+            showModal('battle-lobby');
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Подключаем к комнате дуэли...' : 'Connecting to duel room...');
             state.battleStake = launchData.stake;
             state.battleBotDiff = null;
             state.pendingPvp = {
@@ -595,7 +670,10 @@ function initApp() {
             startLevel('hard', 'Daily');
         }
     });
-    safeSetClick('open-battle', () => { showModal('battle-lobby'); });
+    safeSetClick('open-battle', () => {
+        setBattleLobbyStatus('');
+        showModal('battle-lobby');
+    });
     safeSetClick('open-daily-bonus', () => { showModal('bonus'); });
     safeSetClick('open-rules-btn', () => { showModal('rules'); });
     safeSetClick('open-leaderboard', () => { showModal('leaderboard'); });
@@ -624,6 +702,25 @@ function initApp() {
     safeSetClick('freeze-btn', useFreeze);
     safeSetClick('crystal-btn', useCrystal);
     safeSetClick('magnet-btn', useMagnet);
+    safeSetClick('battle-ready-btn', () => {
+        PVPClient.sendReady();
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Вы готовы. Ждем второго игрока...' : 'You are ready. Waiting for the second player...');
+    });
+    safeSetClick('battle-cancel-btn', () => {
+        PVPClient.cancelRoom();
+        state.pendingPvp = null;
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Ожидание отменено.' : 'Waiting cancelled.');
+    });
+    safeSetClick('battle-rematch-btn', () => {
+        PVPClient.requestRematch();
+        showModal('battle-lobby');
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Запросили реванш...' : 'Rematch requested...');
+    });
+    safeSetClick('battle-rematch-lost-btn', () => {
+        PVPClient.requestRematch();
+        showModal('battle-lobby');
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Запросили реванш...' : 'Rematch requested...');
+    });
 
     safeSetClick('invite-btn', () => {
         const inviteText = state.lang === 'ru'
@@ -733,6 +830,7 @@ function initApp() {
             state.battleBotDiff = null;
             state.pendingPvp = { roomId, diff, stake, stakeCharged: false };
             PVPClient.joinRoom(roomId, diff);
+            setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка отправляется другу...' : 'Sending invite link...');
 
             openTelegramShare(duelLink, inviteText);
         };
@@ -1112,6 +1210,8 @@ function checkWin() {
     setTimeout(function() { checkAndClaimMissions(); }, 1500);
     
     const winRewardText = document.getElementById('win-reward-text');
+    const battleRewardEl = document.getElementById('battle-reward');
+    if (battleRewardEl && state.isBattle) battleRewardEl.textContent = String(reward);
     if (winRewardText) {
         let rewardText = `<span style="color:var(--gold); font-size:1.4rem; text-shadow:0 0 10px var(--gold);">+${reward} ${COIN_ICON_HTML}</span>`;
         if (state.isDaily) {

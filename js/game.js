@@ -869,6 +869,7 @@ function renderGrid(grid) {
     const container = document.getElementById('math-grid');
     if (!container) return;
     container.innerHTML = '';
+    container.className = `grid-size-${grid.length}`;
     container.style.gridTemplateColumns = `repeat(${grid.length}, 1fr)`;
     grid.forEach((row, r) => {
         row.forEach((val, c) => {
@@ -877,17 +878,15 @@ function renderGrid(grid) {
             cell.dataset.r = r; cell.dataset.c = c;
             const cellState = state.fixedCells[`${r}-${c}`];
             const isHinted = cellState === 'hinted';
-            const isUserFilled = cellState === 'user-filled';
-            const isProtected = isHinted || isUserFilled || cellState === true;
+            const isProtected = isHinted || cellState === true;
             
             if (['+','-','*','/','='].includes(val)) {
-                cell.classList.add('operator');
+                cell.className += ' operator';
                 cell.textContent = val;
             } else if (isProtected) {
                 cell.textContent = val;
                 cell.classList.add('fixed');
                 if (isHinted) cell.classList.add('hinted');
-                if (isUserFilled) cell.classList.add('hinted'); // Same style for user-filled
             } else {
                 const isAnswer = state.currentAnswers && state.currentAnswers[`${r}-${c}`] !== undefined;
                 cell.classList.add(isAnswer ? 'empty' : 'void');

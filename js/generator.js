@@ -1,6 +1,6 @@
 // MathX Infinity Generator 4.1 - Fast & Stable
 (function() {
-    const GRID_SIZES = { easy: 5, medium: 7, hard: 9, expert: 9 };
+    const GRID_SIZES = { easy: 5, medium: 7, hard: 9, expert: 11 };
 
     // Быстрый и надежный генератор случайных чисел по сиду
     class SeededRNG {
@@ -29,15 +29,18 @@
             let operators = difficulty === 'easy' ? ['+', '-'] : (difficulty === 'medium' ? ['+', '-', '*'] : ['+', '-', '*', '/']);
 
             let attempts = 0;
-            while (attempts < 200) {
+            const maxAttempts = difficulty === 'expert' ? 500 : 200;
+            
+            while (attempts < maxAttempts) {
                 attempts++;
                 const grid = Array(size).fill().map(() => Array(size).fill(''));
                 const values = {};
                 
                 // 1. Сначала заполняем только ячейки для чисел
+                const maxNum = difficulty === 'expert' ? 12 : 9;
                 for (let r = 0; r < size - 1; r += 2) {
                     for (let c = 0; c < size - 1; c += 2) {
-                        values[`${r}-${c}`] = rng.randomInt(1, 9);
+                        values[`${r}-${c}`] = rng.randomInt(1, maxNum);
                     }
                 }
 
@@ -50,7 +53,7 @@
                         let next = values[`${r}-${c+1}`];
                         if (op === '/' && res % next !== 0) op = '+';
                         res = this.calculate(res, next, op);
-                        if (res === null || res < 1 || res > 300) { isValid = false; break; }
+                        if (res === null || res < 1 || res > 400) { isValid = false; break; }
                         grid[r][c] = op;
                     }
                     if (!isValid) break;
@@ -67,7 +70,7 @@
                         let next = values[`${r+1}-${c}`];
                         if (op === '/' && res % next !== 0) op = '+';
                         res = this.calculate(res, next, op);
-                        if (res === null || res < 1 || res > 300) { isValid = false; break; }
+                        if (res === null || res < 1 || res > 400) { isValid = false; break; }
                         grid[r][c] = op;
                     }
                     if (!isValid) break;
@@ -79,7 +82,7 @@
                 // 4. Скрытие ячеек
                 const answers = {};
                 const fixedCells = {};
-                const hides = { easy: 4, medium: 9, hard: 16, expert: 22 };
+                const hides = { easy: 4, medium: 9, hard: 16, expert: 25 };
                 const targetHidden = hides[difficulty] || 5;
                 
                 let possible = [];

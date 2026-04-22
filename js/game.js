@@ -336,7 +336,7 @@ function updateUI() {
         } else {
             dailyTitle.textContent = I18N[state.lang].daily_level;
             dailySubtitle.style.textAlign = 'left';
-            dailySubtitle.innerHTML = `+200 🪙 ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
+            dailySubtitle.innerHTML = `+200 <span class="coin-icon"></span> ${state.lang === 'ru' ? 'и Кристалл' : '& Crystal'}<br><span style="font-size:0.75rem; color:rgba(255,255,255,0.7);">${getTimeToMidnight()} ${state.lang === 'ru' ? 'до смены' : 'until reset'}</span>`;
         }
     }
 

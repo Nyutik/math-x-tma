@@ -122,7 +122,9 @@ let state = {
     battleStake: 0,
     battleBotDiff: null,
     pendingPvp: null,
-    externalNavigationUntil: 0
+    externalNavigationUntil: 0,
+    effectsResumeTimer: null,
+    handledLaunchParam: ''
 };
 
 const tg = window.Telegram?.WebApp || { 
@@ -571,6 +573,27 @@ function getTelegramStartParam() {
         || '';
 }
 
+function getStoredLaunchParam() {
+    try {
+        return sessionStorage.getItem('mx_pending_start_param') || '';
+    } catch (e) {
+        return '';
+    }
+}
+
+function storeLaunchParam(startParam) {
+    if (!startParam) return;
+    try {
+        sessionStorage.setItem('mx_pending_start_param', startParam);
+    } catch (e) {}
+}
+
+function clearStoredLaunchParam() {
+    try {
+        sessionStorage.removeItem('mx_pending_start_param');
+    } catch (e) {}
+}
+
 function parseLaunchData(startParam) {
     if (!startParam) return null;
     if (startParam.startsWith('duel_')) {
@@ -600,6 +623,14 @@ function markExternalNavigation() {
     document.body.classList.add('suspend-effects');
 }
 
+function scheduleEffectsResume(delay = 1800) {
+    if (state.effectsResumeTimer) clearTimeout(state.effectsResumeTimer);
+    state.effectsResumeTimer = setTimeout(() => {
+        document.body.classList.remove('suspend-effects');
+        state.effectsResumeTimer = null;
+    }, delay);
+}
+
 function openTelegramShare(targetUrl, shareText) {
     const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
     markExternalNavigation();
@@ -622,10 +653,53 @@ async function refreshProfileState() {
     updateUI();
 }
 
+function tryHandleLaunchData() {
+    const startParam = getTelegramStartParam() || getStoredLaunchParam();
+    if (!startParam) return false;
+
+    storeLaunchParam(startParam);
+    if (state.handledLaunchParam === startParam) return true;
+
+    const launchData = parseLaunchData(startParam);
+    if (!launchData) return false;
+
+    if (launchData.type === 'duel') {
+        if (state.pendingPvp?.roomId === launchData.roomId || state.isBattle) {
+            state.handledLaunchParam = startParam;
+            return true;
+        }
+        if (state.coins < launchData.stake) {
+            showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
+            state.handledLaunchParam = startParam;
+            clearStoredLaunchParam();
+            return true;
+        }
+
+        showModal('battle-lobby');
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Подключаем к комнате дуэли...' : 'Connecting to duel room...');
+        state.battleStake = launchData.stake;
+        state.battleBotDiff = null;
+        state.pendingPvp = {
+            roomId: launchData.roomId,
+            diff: launchData.diff,
+            stake: launchData.stake,
+            stakeCharged: false
+        };
+        state.handledLaunchParam = startParam;
+        clearStoredLaunchParam();
+        PVPClient.joinRoom(launchData.roomId, launchData.diff);
+        return true;
+    }
+
+    return false;
+}
+
 window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
 
-    const launchData = parseLaunchData(getTelegramStartParam());
+    const initialStartParam = getTelegramStartParam();
+    if (initialStartParam) storeLaunchParam(initialStartParam);
+    const launchData = parseLaunchData(initialStartParam || getStoredLaunchParam());
     const authExtras = launchData?.type === 'ref' ? { referred_by: launchData.referrerId } : {};
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 }, authExtras);
     if (serverData?.user) {
@@ -681,6 +755,15 @@ window.onload = async () => {
         }
     }
 };
+
+window.addEventListener('load', () => {
+    tryHandleLaunchData();
+    let launchChecks = 0;
+    const launchWatcher = setInterval(() => {
+        launchChecks += 1;
+        if (tryHandleLaunchData() || launchChecks >= 20) clearInterval(launchWatcher);
+    }, 400);
+});
 
 function safeSetClick(id, fn) { 
     const el = document.getElementById(id); 
@@ -1905,4 +1988,30 @@ window.addEventListener('beforeunload', () => {
 
 window.addEventListener('focus', () => {
     document.body.classList.remove('suspend-effects');
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        if (Date.now() < state.externalNavigationUntil) {
+            document.body.classList.add('suspend-effects');
+            scheduleEffectsResume();
+        }
+        tryHandleLaunchData();
+    }
+});
+
+window.addEventListener('focus', () => {
+    if (Date.now() < state.externalNavigationUntil) {
+        document.body.classList.add('suspend-effects');
+        scheduleEffectsResume();
+    }
+    tryHandleLaunchData();
+});
+
+window.addEventListener('pageshow', () => {
+    if (Date.now() < state.externalNavigationUntil) {
+        document.body.classList.add('suspend-effects');
+        scheduleEffectsResume();
+    }
+    tryHandleLaunchData();
 });

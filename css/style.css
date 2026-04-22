@@ -150,6 +150,11 @@ body.telegram-mini-app.theme-starry {
     background-size: auto !important;
 }
 
+body.telegram-mini-app.theme-cyberpunk {
+    background: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
+    background-image: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
+}
+
 body.telegram-mini-app.theme-starry::before,
 body.telegram-mini-app.theme-cyberpunk::before {
     content: none !important;
@@ -157,6 +162,13 @@ body.telegram-mini-app.theme-cyberpunk::before {
 
 body.suspend-effects::before,
 body.suspend-effects::after {
+    animation: none !important;
+    transition: none !important;
+}
+
+body.telegram-mini-app.suspend-effects *,
+body.telegram-mini-app.suspend-effects *::before,
+body.telegram-mini-app.suspend-effects *::after {
     animation: none !important;
     transition: none !important;
 }

@@ -11,10 +11,74 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from datetime import datetime
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 load_dotenv()
 
+# --- BOT CONFIG ---
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+WEBAPP_URL = os.environ.get("WEBAPP_URL", "https://t.me/mathx_infinity_bot/play")
+
+bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
+dp = Dispatcher() if BOT_TOKEN else None
+
+if dp:
+    @dp.message(Command("start"))
+    async def cmd_start(message: types.Message):
+        lang = message.from_user.language_code or "en"
+        name = message.from_user.first_name
+        
+        texts = {
+            "ru": {
+                "cap": f"Привет, {name}! 👋\n\nДобро пожаловать в MathX: Infinity — бесконечную вселенную математических пазлов.\n\nГотов проверить свой интеллект?",
+                "btn": "🚀 Запустить MathX"
+            },
+            "en": {
+                "cap": f"Hello, {name}! 👋\n\nWelcome to MathX: Infinity — an infinite universe of math puzzles.\n\nReady to test your intelligence?",
+                "btn": "🚀 Launch MathX"
+            }
+        }
+        
+        t = texts.get(lang[:2], texts["en"])
+        
+        builder = InlineKeyboardBuilder()
+        builder.row(types.InlineKeyboardButton(
+            text=t["btn"], 
+            web_app=types.WebAppInfo(url=WEBAPP_URL)
+        ))
+        
+        # Попробуем отправить с картинкой, если файл существует
+        photo_path = "images/square_icon.jpeg"
+        if os.path.exists(photo_path):
+            try:
+                from aiogram.types import FSInputFile
+                photo = FSInputFile(photo_path)
+                await message.answer_photo(
+                    photo=photo,
+                    caption=t["cap"],
+                    reply_markup=builder.as_markup()
+                )
+            except Exception as e:
+                print(f"Error sending photo: {e}")
+                await message.answer(t["cap"], reply_markup=builder.as_markup())
+        else:
+            await message.answer(t["cap"], reply_markup=builder.as_markup())
+
 app = FastAPI(title="MathX API")
+
+@app.on_event("startup")
+async def on_startup():
+    if dp and bot:
+        # Запускаем бота в фоновом режиме
+        asyncio.create_task(dp.start_polling(bot))
+        print("🤖 Telegram Bot started")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    if bot:
+        await bot.session.close()
 
 # --- PVP Room Manager ---
 class PVPRoom:

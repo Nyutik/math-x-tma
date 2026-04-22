@@ -26,3 +26,7 @@ dist/
 # *.wav
 
 docs/
+
+arena_id_rsa
+arena_id_rsa.pub
+DEV_NOTES.md

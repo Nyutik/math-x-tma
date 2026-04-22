@@ -172,6 +172,43 @@ class PVPManager:
             "room_status": room.status
         })
 
+    async def try_start_room(self, room: PVPRoom):
+        if len(room.players) != 2:
+            return False
+        if room.status in {"active", "finished", "cancelled"}:
+            return False
+        if not all(player.get("ready") for player in room.player_data.values()):
+            return False
+        try:
+            if not room.bank_committed:
+                for pid in room.players.keys():
+                    add_coins(pid, -room.stake)
+                room.bank_committed = True
+            room.is_started = True
+            room.status = "active"
+            room.started_at = datetime.utcnow()
+            room.seed = f"{room.room_id}:{int(room.started_at.timestamp())}"
+            for data_item in room.player_data.values():
+                data_item["ready"] = False
+            await self.broadcast_to_room(room.room_id, {
+                "status": "start",
+                "room_id": room.room_id,
+                "difficulty": room.difficulty,
+                "players": room.player_data,
+                "seed": room.seed,
+                "stake": room.stake
+            })
+            return True
+        except ValueError:
+            await self.broadcast_to_room(room.room_id, {
+                "status": "cancelled",
+                "room_id": room.room_id,
+                "reason": "insufficient_coins"
+            })
+            room.status = "cancelled"
+            room.finished_at = datetime.utcnow()
+            return False
+
 pvp_manager = PVPManager()
 
 app.add_middleware(
@@ -449,12 +486,13 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                 room.player_data[player_id] = {
                     "name": data.get("name", "Player"),
                     "progress": 0,
-                    "ready": False
+                    "ready": True
                 }
                 pvp_manager.player_to_room[player_id] = room_id
                 room.status = "ready" if len(room.players) == 2 else "waiting"
                 await websocket.send_json({"status": "joined", "room_id": room_id})
                 await pvp_manager.send_lobby_state(room)
+                await pvp_manager.try_start_room(room)
 
             elif action == "ready":
                 room = pvp_manager.get_room(player_id)
@@ -463,35 +501,7 @@ async def pvp_websocket_endpoint(websocket: WebSocket, player_id: int):
                 room.player_data[player_id]["ready"] = True
                 room.status = "ready"
                 await pvp_manager.send_lobby_state(room)
-
-                if len(room.players) == 2 and all(player.get("ready") for player in room.player_data.values()):
-                    try:
-                        if not room.bank_committed:
-                            for pid in room.players.keys():
-                                add_coins(pid, -room.stake)
-                            room.bank_committed = True
-                        room.is_started = True
-                        room.status = "active"
-                        room.started_at = datetime.utcnow()
-                        room.seed = f"{room.room_id}:{int(room.started_at.timestamp())}"
-                        for data_item in room.player_data.values():
-                            data_item["ready"] = False
-                        await pvp_manager.broadcast_to_room(room.room_id, {
-                            "status": "start",
-                            "room_id": room.room_id,
-                            "difficulty": room.difficulty,
-                            "players": room.player_data,
-                            "seed": room.seed,
-                            "stake": room.stake
-                        })
-                    except ValueError:
-                        await pvp_manager.broadcast_to_room(room.room_id, {
-                            "status": "cancelled",
-                            "room_id": room.room_id,
-                            "reason": "insufficient_coins"
-                        })
-                        room.status = "cancelled"
-                        room.finished_at = datetime.utcnow()
+                await pvp_manager.try_start_room(room)
 
             elif action == "cancel_room":
                 room = pvp_manager.get_room(player_id)

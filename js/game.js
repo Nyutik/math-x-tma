@@ -552,6 +552,7 @@ function buildMiniAppLink(startParam = '') {
 
 function markExternalNavigation() {
     state.externalNavigationUntil = Date.now() + 12000;
+    document.body.classList.add('suspend-effects');
 }
 
 function openTelegramShare(targetUrl, shareText) {
@@ -829,6 +830,7 @@ function initApp() {
             state.battleStake = stake;
             state.battleBotDiff = null;
             state.pendingPvp = { roomId, diff, stake, stakeCharged: false };
+            showModal('battle-lobby');
             PVPClient.joinRoom(roomId, diff);
             setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка отправляется другу...' : 'Sending invite link...');
 
@@ -1838,7 +1840,10 @@ function renderNumberPad() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) state.externalNavigationUntil = 0;
+    if (!document.hidden) {
+        state.externalNavigationUntil = 0;
+        document.body.classList.remove('suspend-effects');
+    }
     if (ServerAPI.isTelegram) return;
     if (document.hidden && state.externalNavigationUntil > Date.now()) return;
     if (document.hidden && state.isGameActive && !state.isBattle) {
@@ -1851,4 +1856,8 @@ window.addEventListener('beforeunload', () => {
     if (state.isGameActive && !state.isBattle) {
         saveCurrentToSession(true);
     }
+});
+
+window.addEventListener('focus', () => {
+    document.body.classList.remove('suspend-effects');
 });

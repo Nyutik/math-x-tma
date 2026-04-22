@@ -618,6 +618,12 @@ function buildMiniAppLink(startParam = '') {
     return `${base}?startapp=${encodeURIComponent(startParam)}`;
 }
 
+function buildBotStartLink(startParam = '') {
+    const base = `https://t.me/${BOT_USERNAME}`;
+    if (!startParam) return base;
+    return `${base}?start=${encodeURIComponent(startParam)}`;
+}
+
 function markExternalNavigation() {
     state.externalNavigationUntil = Date.now() + 12000;
     document.body.classList.add('suspend-effects');
@@ -636,6 +642,19 @@ function openTelegramShare(targetUrl, shareText) {
     markExternalNavigation();
     if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
     else window.open(tgLink, '_blank', 'noopener');
+}
+
+async function copyShareMessage(targetUrl, shareText, successText) {
+    const message = `${shareText}\n${targetUrl}`;
+    try {
+        await navigator.clipboard.writeText(message);
+        showToast(successText || (state.lang === 'ru' ? 'Ссылка скопирована.' : 'Link copied.'));
+        return true;
+    } catch (e) {
+        console.warn('[Share] Clipboard failed', e);
+        openTelegramShare(targetUrl, shareText);
+        return false;
+    }
 }
 
 function setBattleLobbyStatus(message = '') {
@@ -856,7 +875,13 @@ function initApp() {
             ? 'Спорим, не решишь эту математическую головоломку? Присоединяйся!'
             : "Bet you can't solve this math puzzle! Join now!";
         const inviteUrl = buildMiniAppLink(`ref_${ServerAPI.getTId()}`);
-        openTelegramShare(inviteUrl, inviteText);
+        copyShareMessage(
+            inviteUrl,
+            inviteText,
+            state.lang === 'ru'
+                ? 'Ссылка приглашения скопирована. Отправьте её другу в Telegram.'
+                : 'Invite link copied. Send it to your friend in Telegram.'
+        );
     });
 
     safeSetClick('claim-btn', function() {
@@ -950,7 +975,7 @@ function initApp() {
             
             const roomId = Math.random().toString(36).substring(2, 10);
             const diff = state.currentDiffTab || 'easy';
-            const duelLink = buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
+            const duelLink = buildBotStartLink(`duel_${roomId}_${diff}_${stake}`);
             const inviteText = state.lang === 'ru'
                 ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.`
                 : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`;
@@ -962,7 +987,13 @@ function initApp() {
             PVPClient.joinRoom(roomId, diff);
             setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка отправляется другу...' : 'Sending invite link...');
 
-            openTelegramShare(duelLink, inviteText);
+            copyShareMessage(
+                duelLink,
+                inviteText,
+                state.lang === 'ru'
+                    ? 'Ссылка на дуэль скопирована. Отправьте её другу в Telegram.'
+                    : 'Duel link copied. Send it to your friend in Telegram.'
+            );
         };
     });
 

@@ -63,16 +63,10 @@ if dp:
         
         t = texts.get(lang[:2], texts["en"])
         builder = InlineKeyboardBuilder()
-        if start_param:
-            builder.row(types.InlineKeyboardButton(
-                text=t["btn"],
-                url=build_mini_app_url(start_param)
-            ))
-        else:
-            builder.row(types.InlineKeyboardButton(
-                text=t["btn"],
-                web_app=types.WebAppInfo(url=WEBAPP_URL)
-            ))
+        builder.row(types.InlineKeyboardButton(
+            text=t["btn"],
+            web_app=types.WebAppInfo(url=build_mini_app_url(start_param) if start_param else WEBAPP_URL)
+        ))
         
         photo_path = "images/square_icon.jpeg"
         if os.path.exists(photo_path):

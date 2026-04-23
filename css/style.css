@@ -148,11 +148,13 @@ body.telegram-mini-app.theme-cyberpunk::before {
 body.telegram-mini-app.theme-starry {
     background-image: linear-gradient(180deg, #090914 0%, #111127 100%) !important;
     background-size: auto !important;
+    position: static !important;
 }
 
 body.telegram-mini-app.theme-cyberpunk {
     background: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
     background-image: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
+    position: static !important;
 }
 
 body.telegram-mini-app.theme-starry::before,
@@ -210,9 +212,27 @@ body {
     font-family: 'Montserrat', sans-serif;
     background-color: var(--bg-onyx);
     color: var(--text);
-    height: 100dvh; width: 100vw;
+    height: var(--app-height, 100dvh);
+    min-height: var(--app-height, 100vh);
+    width: 100vw;
     overflow: hidden;
     position: relative;
+}
+
+body.telegram-mini-app {
+    width: 100%;
+    max-width: 100vw;
+    min-height: var(--app-height, 100vh);
+    height: var(--app-height, 100vh);
+    overscroll-behavior: none;
+}
+
+body.telegram-mini-app::before,
+body.telegram-mini-app::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    will-change: auto !important;
 }
 
 @media (min-width: 768px) {

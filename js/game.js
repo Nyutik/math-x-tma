@@ -138,6 +138,28 @@ try {
     console.warn('[TG] WebApp init failed', e);
 }
 
+function syncViewportHeight() {
+    const stableHeight = Math.max(
+        Math.round(tg.viewportStableHeight || 0),
+        Math.round(tg.viewportHeight || 0),
+        window.innerHeight || 0
+    );
+    if (stableHeight) {
+        document.documentElement.style.setProperty('--app-height', `${stableHeight}px`);
+    }
+}
+
+syncViewportHeight();
+window.addEventListener('resize', syncViewportHeight);
+window.addEventListener('orientationchange', syncViewportHeight);
+if (typeof tg.onEvent === 'function') {
+    try {
+        tg.onEvent('viewportChanged', syncViewportHeight);
+    } catch (e) {
+        console.warn('[TG] viewportChanged subscribe failed', e);
+    }
+}
+
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
 const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/math/ws/pvp` : `ws://${window.location.host}/ws/pvp`;
 const BOT_USERNAME = 'mathx_infinity_bot';
@@ -347,6 +369,14 @@ const ServerAPI = {
     async getStats() { return this.call(`/stats/${this.getTId()}`); },
     async getMissions() { return this.call(`/missions/${this.getTId()}`); },
     async claimMission(mId) { return this.call('/missions/claim', 'POST', { telegram_id: this.getTId(), mission_id: mId }); },
+    async createPvpInvite(diff, stake) {
+        return this.call('/pvp/invite', 'POST', {
+            telegram_id: this.getTId(),
+            difficulty: diff,
+            stake
+        });
+    },
+    async resolvePvpInvite(inviteCode) { return this.call(`/pvp/invite/${inviteCode}`); },
     async getLeaderboard() { return this.call('/leaderboard'); },
     async sync() { 
         return this.call('/sync', 'POST', { 
@@ -590,6 +620,12 @@ function getTelegramStartParam() {
 
 function parseLaunchData(startParam) {
     if (!startParam) return null;
+    if (startParam.startsWith('duel2_')) {
+        return {
+            type: 'duel_invite',
+            inviteCode: startParam.slice(6)
+        };
+    }
     if (startParam.startsWith('duel_')) {
         const parts = startParam.split('_');
         return {
@@ -618,6 +654,11 @@ function markExternalNavigation() {
 
 async function openTelegramShare(targetUrl, shareText) {
     markExternalNavigation();
+    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
+    if (ServerAPI.isTelegram && typeof tg !== 'undefined' && tg.openTelegramLink) {
+        tg.openTelegramLink(tgLink);
+        return true;
+    }
     if (navigator.share) {
         try {
             await navigator.share({ text: shareText, url: targetUrl });
@@ -627,9 +668,7 @@ async function openTelegramShare(targetUrl, shareText) {
             console.warn('[Share] navigator.share failed', e);
         }
     }
-    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
-    if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
-    else window.open(tgLink, '_blank', 'noopener');
+    window.open(tgLink, '_blank', 'noopener');
     return true;
 }
 
@@ -675,6 +714,21 @@ function launchDuelFromLink(launchData) {
     return true;
 }
 
+async function resolveAndLaunchDuelInvite(launchData) {
+    if (!launchData || launchData.type !== 'duel_invite' || !launchData.inviteCode) return false;
+    const invite = await ServerAPI.resolvePvpInvite(launchData.inviteCode);
+    if (!invite?.room_id) {
+        showToast(state.lang === 'ru' ? 'Ссылка на дуэль недействительна или истекла.' : 'Duel invite is invalid or expired.');
+        return true;
+    }
+    return launchDuelFromLink({
+        type: 'duel',
+        roomId: invite.room_id,
+        diff: invite.difficulty || 'easy',
+        stake: invite.stake || 50
+    });
+}
+
 async function refreshProfileState() {
     const data = await ServerAPI.getStats();
     if (!data) return;
@@ -690,6 +744,11 @@ function tryHandleLaunchData() {
     if (!startParam) return false;
     const launchData = parseLaunchData(startParam);
     if (!launchData) return false;
+    if (launchData.type === 'duel') return launchDuelFromLink(launchData);
+    if (launchData.type === 'duel_invite') {
+        resolveAndLaunchDuelInvite(launchData);
+        return true;
+    }
 
     if (launchData.type === 'duel') {
         if (state.pendingPvp?.roomId === launchData.roomId || state.isBattle) return true;
@@ -757,6 +816,7 @@ window.onload = async () => {
     initApp();
     initShop();
     if (launchData?.type === 'duel') return launchDuelFromLink(launchData);
+    if (launchData?.type === 'duel_invite') return resolveAndLaunchDuelInvite(launchData);
 
     if (launchData?.type === 'duel') {
         if (state.coins < launchData.stake) {
@@ -963,13 +1023,16 @@ function initApp() {
 
     const duelInviteBtn = document.querySelectorAll('.duel-invite-btn');
     duelInviteBtn.forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async () => {
             const stake = parseInt(btn.dataset.stake);
             if (state.coins < stake) { Haptics.error(); return showToast(state.lang === 'ru' ? 'Недостаточно монет!' : 'Not enough coins!'); }
             
-            const roomId = `host${ServerAPI.getTId()}`;
             const diff = state.currentDiffTab || 'easy';
-            const duelLink = buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
+            const invite = await ServerAPI.createPvpInvite(diff, stake);
+            const roomId = invite?.room_id || `host${ServerAPI.getTId()}`;
+            const duelLink = invite?.invite_code
+                ? buildMiniAppLink(`duel2_${invite.invite_code}`)
+                : buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
             const inviteText = state.lang === 'ru'
                 ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.`
                 : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`;
@@ -1996,6 +2059,7 @@ function renderNumberPad() {
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         state.externalNavigationUntil = 0;
+        syncViewportHeight();
     }
     if (ServerAPI.isTelegram) return;
     if (document.hidden && state.externalNavigationUntil > Date.now()) return;
@@ -2013,4 +2077,5 @@ window.addEventListener('beforeunload', () => {
 
 window.addEventListener('focus', () => {
     state.externalNavigationUntil = 0;
+    syncViewportHeight();
 });

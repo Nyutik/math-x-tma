@@ -34,14 +34,11 @@ dp = Dispatcher() if BOT_TOKEN else None
 
 if dp:
     def build_mini_app_url(start_param: Optional[str] = None) -> str:
-        if WEBAPP_URL:
-            if start_param:
-                separator = "&" if "?" in WEBAPP_URL else "?"
-                return f"{WEBAPP_URL}{separator}startapp={start_param}"
-            return WEBAPP_URL
         base_url = f"https://t.me/{BOT_USERNAME}/{MINI_APP_SHORT_NAME}"
         if start_param:
             return f"{base_url}?startapp={start_param}"
+        if WEBAPP_URL:
+            return WEBAPP_URL
         return base_url
 
     @dp.message(Command("start"))
@@ -126,6 +123,7 @@ class PVPManager:
     def __init__(self):
         self.rooms: Dict[str, PVPRoom] = {}
         self.player_to_room: Dict[int, str] = {}
+        self.invites: Dict[str, dict] = {}
 
     async def connect(self, websocket: WebSocket, player_id: int):
         if player_id in self.player_to_room:
@@ -252,6 +250,11 @@ class GameScore(BaseModel):
 class MissionClaim(BaseModel):
     telegram_id: int
     mission_id: str
+
+class PVPInviteReq(BaseModel):
+    telegram_id: int
+    difficulty: str = "easy"
+    stake: int = 50
 
 def get_profile_by_tid(telegram_id: int):
     return supabase.schema("mathx").table("profiles").select("*").eq("telegram_id", telegram_id).single().execute()
@@ -413,10 +416,48 @@ async def claim_mission(data: MissionClaim):
     except:
         return {"status": "error"}
 
+@app.post("/pvp/invite")
+async def create_pvp_invite(data: PVPInviteReq):
+    difficulty = data.difficulty if data.difficulty in {"easy", "medium", "hard"} else "easy"
+    stake = max(1, int(data.stake or 50))
+    room_id = f"host{data.telegram_id}"
+    invite_code = uuid.uuid4().hex[:12]
+    pvp_manager.invites[invite_code] = {
+        "room_id": room_id,
+        "difficulty": difficulty,
+        "stake": stake,
+        "host_id": data.telegram_id,
+        "created_at": datetime.utcnow()
+    }
+    return {
+        "invite_code": invite_code,
+        "room_id": room_id,
+        "difficulty": difficulty,
+        "stake": stake
+    }
+
+@app.get("/pvp/invite/{invite_code}")
+async def resolve_pvp_invite(invite_code: str):
+    invite = pvp_manager.invites.get(invite_code)
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if datetime.utcnow() - invite["created_at"] > timedelta(minutes=10):
+        pvp_manager.invites.pop(invite_code, None)
+        raise HTTPException(status_code=410, detail="Invite expired")
+    return {
+        "room_id": invite["room_id"],
+        "difficulty": invite["difficulty"],
+        "stake": invite["stake"],
+        "host_id": invite["host_id"]
+    }
+
 async def pvp_room_watcher():
     while True:
         await asyncio.sleep(5)
         now = datetime.utcnow()
+        for invite_code, invite in list(pvp_manager.invites.items()):
+            if now - invite["created_at"] > timedelta(minutes=10):
+                pvp_manager.invites.pop(invite_code, None)
         expired = []
         for room_id, room in list(pvp_manager.rooms.items()):
             if room.status in {"waiting", "ready"} and now - room.created_at > timedelta(minutes=2):

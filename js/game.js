@@ -122,9 +122,7 @@ let state = {
     battleStake: 0,
     battleBotDiff: null,
     pendingPvp: null,
-    externalNavigationUntil: 0,
-    effectsResumeTimer: null,
-    handledLaunchParam: ''
+    externalNavigationUntil: 0
 };
 
 const tg = window.Telegram?.WebApp || { 
@@ -403,12 +401,29 @@ function applyLanguage() {
 
 function applyTheme(t) { 
     state.theme = t;
-    const bodyClasses = [];
-    if (ServerAPI.isTelegram) bodyClasses.push('telegram-mini-app');
-    bodyClasses.push(`theme-${t}`);
-    const nextClassName = bodyClasses.join(' ');
-    if (document.body.className !== nextClassName) {
-        document.body.className = nextClassName;
+    const body = document.body;
+    Array.from(body.classList)
+        .filter(cls => cls.startsWith('theme-'))
+        .forEach(cls => body.classList.remove(cls));
+    body.classList.add(`theme-${t}`);
+    body.classList.toggle('telegram-mini-app', ServerAPI.isTelegram);
+
+    if (ServerAPI.isTelegram) {
+        const telegramBg = {
+            onyx: '#050505',
+            light: '#f8fafc',
+            amethyst: '#1a1a2e',
+            paper: '#fdf6e3',
+            telegram: '#ffffff',
+            starry: '#090914',
+            cyberpunk: '#180a18',
+            matrix: '#000000',
+            sunset: '#20141a',
+            neon: '#06131a'
+        };
+        const color = telegramBg[t] || telegramBg.onyx;
+        try { tg.setBackgroundColor?.(color); } catch (e) {}
+        try { tg.setHeaderColor?.(color); } catch (e) {}
     }
     localStorage.setItem('mx_theme', t);
     document.querySelectorAll('.theme-circle').forEach(c => {
@@ -573,27 +588,6 @@ function getTelegramStartParam() {
         || '';
 }
 
-function getStoredLaunchParam() {
-    try {
-        return sessionStorage.getItem('mx_pending_start_param') || '';
-    } catch (e) {
-        return '';
-    }
-}
-
-function storeLaunchParam(startParam) {
-    if (!startParam) return;
-    try {
-        sessionStorage.setItem('mx_pending_start_param', startParam);
-    } catch (e) {}
-}
-
-function clearStoredLaunchParam() {
-    try {
-        sessionStorage.removeItem('mx_pending_start_param');
-    } catch (e) {}
-}
-
 function parseLaunchData(startParam) {
     if (!startParam) return null;
     if (startParam.startsWith('duel_')) {
@@ -618,30 +612,26 @@ function buildMiniAppLink(startParam = '') {
     return `${base}?startapp=${encodeURIComponent(startParam)}`;
 }
 
-function buildBotStartLink(startParam = '') {
-    const base = `https://t.me/${BOT_USERNAME}`;
-    if (!startParam) return base;
-    return `${base}?start=${encodeURIComponent(startParam)}`;
-}
-
 function markExternalNavigation() {
     state.externalNavigationUntil = Date.now() + 12000;
     document.body.classList.add('suspend-effects');
 }
 
-function scheduleEffectsResume(delay = 1800) {
-    if (state.effectsResumeTimer) clearTimeout(state.effectsResumeTimer);
-    state.effectsResumeTimer = setTimeout(() => {
-        document.body.classList.remove('suspend-effects');
-        state.effectsResumeTimer = null;
-    }, delay);
-}
-
-function openTelegramShare(targetUrl, shareText) {
-    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
+async function openTelegramShare(targetUrl, shareText) {
     markExternalNavigation();
+    if (navigator.share) {
+        try {
+            await navigator.share({ text: shareText, url: targetUrl });
+            return true;
+        } catch (e) {
+            if (e && e.name === 'AbortError') return false;
+            console.warn('[Share] navigator.share failed', e);
+        }
+    }
+    const tgLink = `https://t.me/share/url?url=${encodeURIComponent(targetUrl)}&text=${encodeURIComponent(shareText)}`;
     if (typeof tg !== 'undefined' && tg.openTelegramLink) tg.openTelegramLink(tgLink);
     else window.open(tgLink, '_blank', 'noopener');
+    return true;
 }
 
 async function copyShareMessage(targetUrl, shareText, successText) {
@@ -662,6 +652,30 @@ function setBattleLobbyStatus(message = '') {
     if (statusEl) statusEl.textContent = message;
 }
 
+function launchDuelFromLink(launchData) {
+    if (!launchData || launchData.type !== 'duel') return false;
+    if (state.pendingPvp?.roomId === launchData.roomId || PVPClient.roomId === launchData.roomId || state.isBattle) {
+        return true;
+    }
+    if (state.coins < launchData.stake) {
+        showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
+        return true;
+    }
+
+    showModal('battle-lobby');
+    setBattleLobbyStatus(state.lang === 'ru' ? 'Подключаем к комнате дуэли...' : 'Connecting to duel room...');
+    state.battleStake = launchData.stake;
+    state.battleBotDiff = null;
+    state.pendingPvp = {
+        roomId: launchData.roomId,
+        diff: launchData.diff,
+        stake: launchData.stake,
+        stakeCharged: false
+    };
+    PVPClient.joinRoom(launchData.roomId, launchData.diff);
+    return true;
+}
+
 async function refreshProfileState() {
     const data = await ServerAPI.getStats();
     if (!data) return;
@@ -673,24 +687,15 @@ async function refreshProfileState() {
 }
 
 function tryHandleLaunchData() {
-    const startParam = getTelegramStartParam() || getStoredLaunchParam();
+    const startParam = getTelegramStartParam();
     if (!startParam) return false;
-
-    storeLaunchParam(startParam);
-    if (state.handledLaunchParam === startParam) return true;
-
     const launchData = parseLaunchData(startParam);
     if (!launchData) return false;
 
     if (launchData.type === 'duel') {
-        if (state.pendingPvp?.roomId === launchData.roomId || state.isBattle) {
-            state.handledLaunchParam = startParam;
-            return true;
-        }
+        if (state.pendingPvp?.roomId === launchData.roomId || state.isBattle) return true;
         if (state.coins < launchData.stake) {
             showToast(state.lang === 'ru' ? 'Недостаточно монет для дуэли!' : 'Not enough coins for duel!');
-            state.handledLaunchParam = startParam;
-            clearStoredLaunchParam();
             return true;
         }
 
@@ -704,8 +709,6 @@ function tryHandleLaunchData() {
             stake: launchData.stake,
             stakeCharged: false
         };
-        state.handledLaunchParam = startParam;
-        clearStoredLaunchParam();
         PVPClient.joinRoom(launchData.roomId, launchData.diff);
         return true;
     }
@@ -717,8 +720,7 @@ window.onload = async () => {
     if (typeof AudioManager !== 'undefined') AudioManager.init();
 
     const initialStartParam = getTelegramStartParam();
-    if (initialStartParam) storeLaunchParam(initialStartParam);
-    const launchData = parseLaunchData(initialStartParam || getStoredLaunchParam());
+    const launchData = parseLaunchData(initialStartParam);
     const authExtras = launchData?.type === 'ref' ? { referred_by: launchData.referrerId } : {};
     const serverData = await ServerAPI.auth(tg.initDataUnsafe.user || { id: 12345 }, authExtras);
     if (serverData?.user) {
@@ -755,6 +757,7 @@ window.onload = async () => {
     updateUI();
     initApp();
     initShop();
+    if (launchData?.type === 'duel') return launchDuelFromLink(launchData);
 
     if (launchData?.type === 'duel') {
         if (state.coins < launchData.stake) {
@@ -774,15 +777,6 @@ window.onload = async () => {
         }
     }
 };
-
-window.addEventListener('load', () => {
-    tryHandleLaunchData();
-    let launchChecks = 0;
-    const launchWatcher = setInterval(() => {
-        launchChecks += 1;
-        if (tryHandleLaunchData() || launchChecks >= 20) clearInterval(launchWatcher);
-    }, 400);
-});
 
 function safeSetClick(id, fn) { 
     const el = document.getElementById(id); 

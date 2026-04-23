@@ -160,12 +160,6 @@ body.telegram-mini-app.theme-cyberpunk::before {
     content: none !important;
 }
 
-body.suspend-effects::before,
-body.suspend-effects::after {
-    animation: none !important;
-    transition: none !important;
-}
-
 .theme-matrix {
     --bg-onyx: #000000;
     --card-onyx: #0a110a;

@@ -614,7 +614,6 @@ function buildMiniAppLink(startParam = '') {
 
 function markExternalNavigation() {
     state.externalNavigationUntil = Date.now() + 12000;
-    document.body.classList.add('suspend-effects');
 }
 
 async function openTelegramShare(targetUrl, shareText) {
@@ -968,7 +967,7 @@ function initApp() {
             const stake = parseInt(btn.dataset.stake);
             if (state.coins < stake) { Haptics.error(); return showToast(state.lang === 'ru' ? 'Недостаточно монет!' : 'Not enough coins!'); }
             
-            const roomId = Math.random().toString(36).substring(2, 10);
+            const roomId = `host${ServerAPI.getTId()}`;
             const diff = state.currentDiffTab || 'easy';
             const duelLink = buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
             const inviteText = state.lang === 'ru'
@@ -1997,7 +1996,6 @@ function renderNumberPad() {
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         state.externalNavigationUntil = 0;
-        document.body.classList.remove('suspend-effects');
     }
     if (ServerAPI.isTelegram) return;
     if (document.hidden && state.externalNavigationUntil > Date.now()) return;
@@ -2014,5 +2012,5 @@ window.addEventListener('beforeunload', () => {
 });
 
 window.addEventListener('focus', () => {
-    document.body.classList.remove('suspend-effects');
+    state.externalNavigationUntil = 0;
 });

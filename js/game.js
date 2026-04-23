@@ -875,6 +875,7 @@ function initApp() {
             ? 'Спорим, не решишь эту математическую головоломку? Присоединяйся!'
             : "Bet you can't solve this math puzzle! Join now!";
         const inviteUrl = buildMiniAppLink(`ref_${ServerAPI.getTId()}`);
+        return openTelegramShare(inviteUrl, inviteText);
         copyShareMessage(
             inviteUrl,
             inviteText,
@@ -975,7 +976,7 @@ function initApp() {
             
             const roomId = Math.random().toString(36).substring(2, 10);
             const diff = state.currentDiffTab || 'easy';
-            const duelLink = buildBotStartLink(`duel_${roomId}_${diff}_${stake}`);
+            const duelLink = buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
             const inviteText = state.lang === 'ru'
                 ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.`
                 : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`;
@@ -987,6 +988,7 @@ function initApp() {
             PVPClient.joinRoom(roomId, diff);
             setBattleLobbyStatus(state.lang === 'ru' ? 'Ссылка отправляется другу...' : 'Sending invite link...');
 
+            return openTelegramShare(duelLink, inviteText);
             copyShareMessage(
                 duelLink,
                 inviteText,
@@ -2019,30 +2021,4 @@ window.addEventListener('beforeunload', () => {
 
 window.addEventListener('focus', () => {
     document.body.classList.remove('suspend-effects');
-});
-
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        if (Date.now() < state.externalNavigationUntil) {
-            document.body.classList.add('suspend-effects');
-            scheduleEffectsResume();
-        }
-        tryHandleLaunchData();
-    }
-});
-
-window.addEventListener('focus', () => {
-    if (Date.now() < state.externalNavigationUntil) {
-        document.body.classList.add('suspend-effects');
-        scheduleEffectsResume();
-    }
-    tryHandleLaunchData();
-});
-
-window.addEventListener('pageshow', () => {
-    if (Date.now() < state.externalNavigationUntil) {
-        document.body.classList.add('suspend-effects');
-        scheduleEffectsResume();
-    }
-    tryHandleLaunchData();
 });

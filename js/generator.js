@@ -37,7 +37,7 @@
                 const values = {};
                 
                 // 1. Сначала заполняем только ячейки для чисел
-                const maxNum = difficulty === 'expert' ? 12 : 9;
+                const maxNum = 9;
                 for (let r = 0; r < size - 1; r += 2) {
                     for (let c = 0; c < size - 1; c += 2) {
                         values[`${r}-${c}`] = rng.randomInt(1, maxNum);

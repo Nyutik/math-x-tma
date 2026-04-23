@@ -166,13 +166,6 @@ body.suspend-effects::after {
     transition: none !important;
 }
 
-body.telegram-mini-app.suspend-effects *,
-body.telegram-mini-app.suspend-effects *::before,
-body.telegram-mini-app.suspend-effects *::after {
-    animation: none !important;
-    transition: none !important;
-}
-
 .theme-matrix {
     --bg-onyx: #000000;
     --card-onyx: #0a110a;

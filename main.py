@@ -177,8 +177,7 @@ class PVPManager:
             return False
         if room.status in {"active", "finished", "cancelled"}:
             return False
-        if not all(player.get("ready") for player in room.player_data.values()):
-            return False
+        # Автостарт при заполнении комнаты (убрана проверка ready)
         try:
             if not room.bank_committed:
                 for pid in room.players.keys():
@@ -188,7 +187,9 @@ class PVPManager:
             room.status = "active"
             room.started_at = datetime.utcnow()
             room.seed = f"{room.room_id}:{int(room.started_at.timestamp())}"
+            # Сбрасываем прогресс и готовность для чистого старта
             for data_item in room.player_data.values():
+                data_item["progress"] = 0
                 data_item["ready"] = False
             await self.broadcast_to_room(room.room_id, {
                 "status": "start",
@@ -299,11 +300,24 @@ async def auth_user(user: UserAuth):
                     raise
             if referral_applied:
                 try:
-                    inviter_res = supabase.schema("mathx").table("profiles").select("coins").eq("telegram_id", user.referred_by).single().execute()
+                    inviter_res = supabase.schema("mathx").table("profiles").select("coins, username, display_name").eq("telegram_id", user.referred_by).single().execute()
                     inviter_coins = inviter_res.data.get("coins", 0) if inviter_res and inviter_res.data else 0
+                    inviter_name = inviter_res.data.get("display_name") or inviter_res.data.get("username") or "Игрок"
+                    
                     supabase.schema("mathx").table("profiles").update({
                         "coins": inviter_coins + 100
                     }).eq("telegram_id", user.referred_by).execute()
+                    
+                    # Отправляем уведомление пригласившему
+                    if bot:
+                        try:
+                            new_user_name = user.display_name or user.username or "Новый игрок"
+                            await bot.send_message(
+                                chat_id=user.referred_by,
+                                text=f"🎉 Ваш друг {new_user_name} присоединился к MathX! Вам начислено +100 монет бонуса."
+                            )
+                        except Exception as e:
+                            print(f"Failed to send referral notification: {e}")
                 except Exception:
                     print("Referral bonus skipped")
             return {"status": "created", "user": res.data[0]}

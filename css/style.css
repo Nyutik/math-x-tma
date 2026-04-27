@@ -21,6 +21,7 @@
     --glass: rgba(15, 23, 42, 0.05);
     --glass-border: rgba(15, 23, 42, 0.1);
 }
+
 .theme-amethyst {
     --bg-onyx: #1a1a2e;
     --card-onyx: rgba(138, 43, 226, 0.1);
@@ -44,6 +45,33 @@
         linear-gradient(90deg, transparent 79px, #abced4 79px, #abced4 81px, transparent 81px),
         linear-gradient(#eee 0.1em, transparent 0.1em);
     background-size: 100% 1.2em;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Эффект текстуры бумаги (шум) */
+.theme-paper::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    z-index: 0;
+}
+
+/* Анимация "карандашного наброска" при переходе */
+.theme-paper .cell {
+    transition: background-color 0.3s, transform 0.2s;
+}
+.theme-paper .cell.fixed {
+    animation: sketch-in 0.5s ease-out;
+}
+
+@keyframes sketch-in {
+    0% { transform: scale(0.8) rotate(-2deg); opacity: 0; }
+    50% { transform: scale(1.05) rotate(1deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
 .theme-telegram {
@@ -66,20 +94,22 @@
     --text-dim: #8888aa;
     --glass: rgba(192, 160, 255, 0.1);
     --glass-border: rgba(192, 160, 255, 0.2);
-    background-image: 
-        radial-gradient(3px 3px at 20px 30px, #fff, transparent),
-        radial-gradient(3px 3px at 40px 70px, rgba(255,255,255,0.9), transparent),
-        radial-gradient(2px 2px at 90px 40px, #fff, transparent),
-        radial-gradient(3px 3px at 160px 120px, rgba(255,255,255,1), transparent),
-        radial-gradient(2px 2px at 230px 80px, #fff, transparent),
-        radial-gradient(3px 3px at 300px 200px, rgba(255,255,255,0.9), transparent),
-        radial-gradient(2px 2px at 350px 150px, #fff, transparent),
-        radial-gradient(4px 4px at 420px 50px, rgba(255,255,255,1), transparent),
-        radial-gradient(2px 2px at 50px 200px, rgba(255,255,255,0.8), transparent),
-        radial-gradient(3px 3px at 200px 250px, #fff, transparent);
-    background-size: 500px 300px;
     position: relative;
     overflow: hidden;
+    animation: starry-bg-move 120s linear infinite;
+    background-image: 
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,1), transparent),
+        radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 20% 90%, rgba(192,160,255,0.9), transparent),
+        radial-gradient(2px 2px at 80% 30%, rgba(192,160,255,1), transparent);
+}
+
+@keyframes starry-bg-move {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 100%; }
 }
 
 .theme-starry::before {
@@ -99,10 +129,23 @@
     animation: twinkle-overlay 6s ease-in-out infinite alternate;
 }
 
-@keyframes twinkle {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; }
-    100% { opacity: 0.7; }
+/* Эффект "созвездия" - линии */
+.theme-starry::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: 
+        linear-gradient(45deg, transparent 40%, rgba(192,160,255,0.05) 50%, transparent 60%),
+        linear-gradient(-45deg, transparent 40%, rgba(192,160,255,0.05) 50%, transparent 60%);
+    background-size: 200% 200%;
+    animation: constellation-move 20s linear infinite;
+    z-index: 0;
+}
+
+@keyframes constellation-move {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 200%; }
 }
 
 @keyframes twinkle-overlay {
@@ -140,26 +183,9 @@
     animation: glitch-scan 10s linear infinite;
 }
 
-body.telegram-mini-app.theme-starry::before,
-body.telegram-mini-app.theme-cyberpunk::before {
-    animation: none !important;
-}
-
-body.telegram-mini-app.theme-starry {
-    background-image: linear-gradient(180deg, #090914 0%, #111127 100%) !important;
-    background-size: auto !important;
-    position: static !important;
-}
-
-body.telegram-mini-app.theme-cyberpunk {
-    background: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
-    background-image: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
-    position: static !important;
-}
-
-body.telegram-mini-app.theme-starry::before,
-body.telegram-mini-app.theme-cyberpunk::before {
-    content: none !important;
+@keyframes glitch-scan {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
 }
 
 .theme-matrix {
@@ -198,9 +224,27 @@ body.telegram-mini-app.theme-cyberpunk::before {
     background: linear-gradient(135deg, #020024 0%, #090979 50%, #00d4ff 100%);
 }
 
-@keyframes glitch-scan {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(100%); }
+body.telegram-mini-app.theme-starry::before,
+body.telegram-mini-app.theme-cyberpunk::before {
+    animation: none !important;
+}
+
+body.telegram-mini-app.theme-starry {
+    background-image: linear-gradient(180deg, #090914 0%, #111127 100%) !important;
+    background-size: auto !important;
+    position: static !important;
+}
+
+body.telegram-mini-app.theme-cyberpunk {
+    background: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
+    background-image: linear-gradient(135deg, #180a18 0%, #101926 100%) !important;
+    position: static !important;
+}
+
+body.telegram-mini-app.theme-starry::before,
+body.telegram-mini-app.theme-cyberpunk::before,
+body.telegram-mini-app.theme-starry::after {
+    content: none !important;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; user-select: none; }
@@ -462,3 +506,188 @@ body.telegram-mini-app::after {
     background-repeat: no-repeat;
     margin: 0 2px;
 }
+.buy-btn {
+    padding: 10px 18px; border-radius: 14px; border: none;
+    background: var(--accent); color: #000; font-weight: 900; 
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px var(--accent-glow);
+}
+.buy-btn:active { transform: scale(0.95); opacity: 0.8; }
+.buy-btn.disabled { background: #333; color: #555; box-shadow: none; cursor: not-allowed; }
+
+.leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.coin-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23FFD700'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 2px;
+}
+}
+    animation: fadeIn 0.3s ease-out;
+}
+.item-icon {
+    width: 60px; height: 60px; border-radius: 16px; 
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass); position: relative;
+}
+.item-icon i { width: 32px; height: 32px; color: var(--accent); }
+.item-icon span { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-size: 0.7rem; font-weight: 900; padding: 2px 6px; border-radius: 8px; }
+
+.item-info { flex: 1; }
+.item-info h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.item-info p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+
+.buy-btn {
+    padding: 10px 18px; border-radius: 14px; border: none;
+    background: var(--accent); color: #000; font-weight: 900; 
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px var(--accent-glow);
+}
+.buy-btn:active { transform: scale(0.95); opacity: 0.8; }
+.buy-btn.disabled { background: #333; color: #555; box-shadow: none; cursor: not-allowed; }
+
+.leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.coin-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23FFD700'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 2px;
+}
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass); position: relative;
+}
+.item-icon i { width: 32px; height: 32px; color: var(--accent); }
+.item-icon span { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-size: 0.7rem; font-weight: 900; padding: 2px 6px; border-radius: 8px; }
+
+.item-info { flex: 1; }
+.item-info h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.item-info p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+
+.buy-btn {
+    padding: 10px 18px; border-radius: 14px; border: none;
+    background: var(--accent); color: #000; font-weight: 900; 
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px var(--accent-glow);
+}
+.buy-btn:active { transform: scale(0.95); opacity: 0.8; }
+.buy-btn.disabled { background: #333; color: #555; box-shadow: none; cursor: not-allowed; }
+
+.leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.coin-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23FFD700'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 2px;
+}
+
+.level-btn.current { background: var(--accent); border-color: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent-glow); transform: scale(1.05); z-index: 2; }
+.level-btn.locked { opacity: 0.5; background: rgba(0,0,0,0.5); border-style: dashed; cursor: not-allowed; }
+.lock-icon { position: absolute; bottom: -5px; right: -5px; background: #222; border-radius: 50%; padding: 4px; color: var(--gold); border: 1px solid var(--glass-border); display: flex; }
+
+/* SETTINGS & SHOP */
+.setting-row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--glass-border); }
+.lang-switch { display: flex; gap: 8px; }
+.lang-btn { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--glass-border); background: none; color: var(--text); font-weight: 800; cursor: pointer; }
+.lang-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+.theme-switch { display: flex; gap: 12px; }
+.theme-circle { width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.theme-circle.active { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); transform: scale(1.1); }
+
+/* SHOP SYSTEM */
+.shop-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+.shop-tab { flex: 1; padding: 12px; background: var(--card-onyx); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-dim); font-weight: 800; cursor: pointer; }
+.shop-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+.shop-grid { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+.shop-item {
+    background: var(--card-onyx); border: 1px solid var(--glass-border);
+    border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 16px;
+    animation: fadeIn 0.3s ease-out;
+}
+.item-icon {
+    width: 60px; height: 60px; border-radius: 16px; 
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass); position: relative;
+}
+.item-icon i { width: 32px; height: 32px; color: var(--accent); }
+.item-icon span { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-size: 0.7rem; font-weight: 900; padding: 2px 6px; border-radius: 8px; }
+
+.item-info { flex: 1; }
+.item-info h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.item-info p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+
+.buy-btn {
+    padding: 10px 18px; border-radius: 14px; border: none;
+    background: var(--accent); color: #000; font-weight: 900; 
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px var(--accent-glow);
+}
+.buy-btn:active { transform: scale(0.95); opacity: 0.8; }
+.buy-btn.disabled { background: #333; color: #555; box-shadow: none; cursor: not-allowed; }
+
+.leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.coin-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23FFD700'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 2px;
+}
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glass); position: relative;
+}
+.item-icon i { width: 32px; height: 32px; color: var(--accent); }
+.item-icon span { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-size: 0.7rem; font-weight: 900; padding: 2px 6px; border-radius: 8px; }
+
+.item-info { flex: 1; }
+.item-info h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.item-info p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+
+.buy-btn {
+    padding: 10px 18px; border-radius: 14px; border: none;
+    background: var(--accent); color: #000; font-weight: 900; 
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px var(--accent-glow);
+}
+.buy-btn:active { transform: scale(0.95); opacity: 0.8; }
+.buy-btn.disabled { background: #333; color: #555; box-shadow: none; cursor: not-allowed; }
+
+.leader-item { background: var(--card-onyx); padding: 15px 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.coin-icon {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    flex-shrink: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%23FFD700'/%3E%3Ccircle cx='12' cy='12' r='6' fill='none' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0 2px;
+}
+
+

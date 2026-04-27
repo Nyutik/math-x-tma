@@ -161,7 +161,7 @@ if (typeof tg.onEvent === 'function') {
 }
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
-const WS_URL = window.location.protocol === 'https:' ? `wss://${window.location.host}/math/ws/pvp` : `ws://${window.location.host}/ws/pvp`;
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}${API_URL}/ws/pvp`;
 const BOT_USERNAME = 'mathx_infinity_bot';
 const MINI_APP_SHORT_NAME = 'app';
 const COIN_ICON_HTML = '<span class="coin-icon" aria-hidden="true"></span>';
@@ -452,8 +452,8 @@ function applyTheme(t) {
             neon: '#06131a'
         };
         const color = telegramBg[t] || telegramBg.onyx;
-        try { tg.setBackgroundColor?.(color); } catch (e) {}
-        try { tg.setHeaderColor?.(color); } catch (e) {}
+        try { if (tg.setBackgroundColor) tg.setBackgroundColor(color); } catch (e) {}
+        try { if (tg.setHeaderColor) tg.setHeaderColor(color); } catch (e) {}
     }
     localStorage.setItem('mx_theme', t);
     document.querySelectorAll('.theme-circle').forEach(c => {
@@ -957,7 +957,9 @@ function initApp() {
         localStorage.setItem('mx_streak', currentStreak);
         
         Haptics.success();
-        saveData(); updateUI(); closeModal();
+        saveData(); updateUI();
+        updateBonusModal(); // Обновляем модалку сразу
+        closeModal();
         
         if (currentStreak > 1) {
             showToast((state.lang === 'ru' ? '🔥 ' : '🔥 ') + currentStreak + (state.lang === 'ru' ? ' день подряд! Бонус x' : ' days in a row! Bonus x') + currentStreak);
@@ -1483,8 +1485,8 @@ function startTimer() {
 function updateTimerUI() {
     const el = document.querySelector('#game-timer span');
     if (el) {
-        const m = String(Math.floor(state.secondsElapsed/60)).padStart(2,'0');
-        const s = String(state.secondsElapsed%60).padStart(2,'0');
+        const m = `${Math.floor(state.secondsElapsed/60)}`.padStart(2,'0');
+        const s = `${state.secondsElapsed%60}`.padStart(2,'0');
         el.textContent = `${m}:${s}`;
     }
 }
@@ -1966,7 +1968,7 @@ async function renderGallery() {
         const unlockedPieces = Math.max(0, Math.min(art.pieces, solved - art.levels_start));
         const isUnlocked = unlockedPieces === art.pieces;
         
-        const cols = Math.sqrt(art.pieces); // 3x3, 4x4, 5x5
+        const cols = Math.round(Math.sqrt(art.pieces)); // 3x3, 4x4, 5x5
         let puzzleHtml = '';
         for (let i = 0; i < art.pieces; i++) {
             const isPieceUnlocked = i < unlockedPieces;

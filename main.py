@@ -702,4 +702,6 @@ async def catch_all(file_path: str):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Используем root_path для корректной обработки префикса /math на продакшене
+    root_path = os.environ.get("ROOT_PATH", "")
+    uvicorn.run(app, host="0.0.0.0", port=port, root_path=root_path)

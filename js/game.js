@@ -161,7 +161,7 @@ if (typeof tg.onEvent === 'function') {
 }
 
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '/math';
-const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/pvp`;
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}${API_URL}/ws/pvp`;
 const BOT_USERNAME = 'mathx_infinity_bot';
 const MINI_APP_SHORT_NAME = 'app';
 const COIN_ICON_HTML = '<span class="coin-icon" aria-hidden="true"></span>';

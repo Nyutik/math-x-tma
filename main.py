@@ -34,11 +34,14 @@ dp = Dispatcher() if BOT_TOKEN else None
 
 if dp:
     def build_mini_app_url(start_param: Optional[str] = None) -> str:
+        if WEBAPP_URL:
+            if start_param:
+                separator = "&" if "?" in WEBAPP_URL else "?"
+                return f"{WEBAPP_URL}{separator}startapp={start_param}"
+            return WEBAPP_URL
         base_url = f"https://t.me/{BOT_USERNAME}/{MINI_APP_SHORT_NAME}"
         if start_param:
             return f"{base_url}?startapp={start_param}"
-        if WEBAPP_URL:
-            return WEBAPP_URL
         return base_url
 
     @dp.message(Command("start"))
@@ -74,7 +77,7 @@ if dp:
         if start_param:
             builder.row(types.InlineKeyboardButton(
                 text=t["btn"],
-                url=build_mini_app_url(start_param)
+                web_app=types.WebAppInfo(url=build_mini_app_url(start_param))
             ))
         else:
             builder.row(types.InlineKeyboardButton(

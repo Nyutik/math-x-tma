@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MathX: Infinity</title>
-    <link rel="stylesheet" href="css/style.css?v=6.8">
+    <link rel="stylesheet" href="css/style.css?v=6.9">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>window.lucide?.createIcons();</script>
@@ -239,15 +239,28 @@
                         <i data-lucide="users" style="width: 48px; height: 48px; color: var(--accent); margin-bottom: 10px;"></i>
                         <h3 data-i18n="vs_friend" style="margin: 0 0 10px 0;">Играть с Другом</h3>
                         <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px;" data-i18n="vs_friend_duel_desc">Вызови друга на дуэль и сразись за монеты!</p>
-                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+                            <span style="font-size:0.8rem; color:var(--text-dim);">Сложность дуэли</span>
+                            <span id="duel-selected-diff" style="font-weight:800; color:var(--accent);">ЛЕГКО</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:12px;">
+                            <button class="duel-diff-tab active" data-diff="easy" style="padding:10px; border-radius:12px; border:1px solid var(--glass-border); background:var(--card-onyx); color:var(--text); font-weight:800; cursor:pointer;">EASY</button>
+                            <button class="duel-diff-tab" data-diff="medium" style="padding:10px; border-radius:12px; border:1px solid var(--glass-border); background:var(--card-onyx); color:var(--text); font-weight:800; cursor:pointer;">MED</button>
+                            <button class="duel-diff-tab" data-diff="hard" style="padding:10px; border-radius:12px; border:1px solid var(--glass-border); background:var(--card-onyx); color:var(--text); font-weight:800; cursor:pointer;">HARD</button>
+                            <button class="duel-diff-tab" data-diff="expert" style="padding:10px; border-radius:12px; border:1px solid var(--glass-border); background:var(--card-onyx); color:var(--text); font-weight:800; cursor:pointer;">EXP</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="duel-invite-btn" data-stake="20" style="padding: 12px; border-radius: 12px; border: 1px solid var(--success-color); background: rgba(0,255,136,0.1); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="share-2" style="width:16px; height:16px;"></i> 20 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>
+                            </button>
                             <button class="duel-invite-btn" data-stake="50" style="padding: 12px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,242,255,0.1); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <i data-lucide="share-2" style="width:16px; height:16px;"></i> <span data-i18n="invite_duel">Вызвать на дуэль</span> (50 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>)
+                                <i data-lucide="share-2" style="width:16px; height:16px;"></i> 50 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>
                             </button>
-                            <button id="battle-ready-btn" style="padding: 12px; border-radius: 12px; border: 1px solid var(--success-color); background: rgba(0,255,136,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
-                                Готов
+                            <button class="duel-invite-btn" data-stake="100" style="padding: 12px; border-radius: 12px; border: 1px solid #ff9f43; background: rgba(255,159,67,0.12); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="share-2" style="width:16px; height:16px;"></i> 100 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>
                             </button>
-                            <button id="battle-cancel-btn" style="padding: 12px; border-radius: 12px; border: 1px solid #ff6b6b; background: rgba(255,107,107,0.1); color: var(--text); font-weight: bold; cursor: pointer;">
-                                Отменить ожидание
+                            <button class="duel-invite-btn" data-stake="200" style="padding: 12px; border-radius: 12px; border: 1px solid #ff4757; background: rgba(255,71,87,0.12); color: var(--text); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i data-lucide="share-2" style="width:16px; height:16px;"></i> 200 <span class="coin-icon" aria-hidden="true" style="width:14px; height:14px;"></span>
                             </button>
                         </div>
                         <p id="battle-lobby-status" style="margin: 14px 0 0; color: var(--text-dim); font-size: 0.8rem; min-height: 1.2em;"></p>
@@ -564,8 +577,8 @@
 
         </div>
     </div>
-    <script src="js/generator.js?v=8.8"></script>
-    <script src="js/audio.js?v=8.8"></script>
-    <script src="js/game.js?v=8.8"></script>
+    <script src="js/generator.js?v=8.9"></script>
+    <script src="js/audio.js?v=8.9"></script>
+    <script src="js/game.js?v=8.9"></script>
 </body>
 </html>

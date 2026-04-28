@@ -106,6 +106,7 @@ let state = {
     transactions: JSON.parse(localStorage.getItem('mx_transactions') || '{"earned":{},"spent":{}}'),
     activeSession: JSON.parse(localStorage.getItem('mx_active_session') || 'null'),
     currentDiffTab: 'easy',
+    currentDuelDiff: localStorage.getItem('mx_duel_diff') || 'easy',
     isGameActive: false,
     isBattle: false,
     isDaily: false,
@@ -241,11 +242,9 @@ const PVPClient = {
             if (text) text.textContent = `${Math.round(msg.progress)}%`;
         } else if (msg.status === 'lobby') {
             this.roomId = msg.room_id;
-            this.readyPlayers = msg.ready_players || {};
-            const readyCount = Object.values(this.readyPlayers).filter(Boolean).length;
             setBattleLobbyStatus(state.lang === 'ru'
-                ? `Игроки в комнате: ${msg.player_count}/2. Готовы: ${readyCount}/2`
-                : `Players in room: ${msg.player_count}/2. Ready: ${readyCount}/2`);
+                ? `Игроки в комнате: ${msg.player_count}/2. Сложность: ${(I18N[state.lang][msg.difficulty] || msg.difficulty).toLowerCase()}. Ставка: ${msg.stake}.`
+                : `Players in room: ${msg.player_count}/2. Difficulty: ${msg.difficulty}. Stake: ${msg.stake}.`);
         } else if (msg.status === 'cancelled') {
             this.pendingJoin = null;
             state.pendingPvp = null;
@@ -261,10 +260,8 @@ const PVPClient = {
             this.roomId = null;
             refreshProfileState();
             if (msg.winner_id === ServerAPI.getTId()) {
-                const rewardEl = document.getElementById('battle-reward');
-                if (rewardEl && state.battleStake) rewardEl.textContent = String(state.battleStake * 2);
                 setBattleLobbyStatus('');
-                showModal('battle-result');
+                applyConfirmedPvpVictory(msg.stake || state.battleStake, msg.winner_coins);
             } else {
                 setBattleLobbyStatus(state.lang === 'ru' ? 'Комната закрыта по таймауту.' : 'Room closed by timeout.');
                 showToast(state.lang === 'ru' ? 'Таймаут ожидания дуэли.' : 'Duel lobby timed out.');
@@ -282,12 +279,11 @@ const PVPClient = {
             }
         } else if (msg.status === 'game_over') {
             state.pendingPvp = null;
+            this.roomId = null;
             setBattleLobbyStatus('');
             refreshProfileState();
-            const rewardEl = document.getElementById('battle-reward');
-            if (rewardEl && msg.stake) rewardEl.textContent = String(msg.stake * 2);
             if (msg.winner_id === ServerAPI.getTId()) {
-                // We won handled locally
+                applyConfirmedPvpVictory(msg.stake || state.battleStake, msg.winner_coins);
             } else {
                 Haptics.error();
                 clearInterval(state.timerInterval);
@@ -696,6 +692,41 @@ function setBattleLobbyStatus(message = '') {
     if (statusEl) statusEl.textContent = message;
 }
 
+function updateDuelControls() {
+    document.querySelectorAll('.duel-diff-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.diff === state.currentDuelDiff);
+    });
+    const label = document.getElementById('duel-selected-diff');
+    if (label) {
+        const diffKey = state.currentDuelDiff || 'easy';
+        label.textContent = I18N[state.lang][diffKey] || diffKey.toUpperCase();
+    }
+}
+
+function applyConfirmedPvpVictory(stake, winnerCoins = null) {
+    const reward = stake * 2;
+    state.stats.totalSolved++;
+    const today = getLocalDateStr();
+    if (state.lastSolvedDate !== today) {
+        state.todaySolved = 0;
+        state.lastSolvedDate = today;
+        localStorage.setItem('mx_last_solved_date', today);
+    }
+    state.todaySolved++;
+    localStorage.setItem('mx_today_solved', state.todaySolved);
+    addTransaction('earned', 'battle', reward);
+    if (typeof winnerCoins === 'number') state.coins = winnerCoins;
+    let xpGained = 20;
+    if (state.streak >= 7) xpGained *= 2;
+    state.xp += xpGained;
+    state.level = Math.floor(state.xp / 100) + 1;
+    saveData();
+    ServerAPI.saveScore(state.diff, state.secondsElapsed, reward);
+    const rewardEl = document.getElementById('battle-reward');
+    if (rewardEl) rewardEl.textContent = String(reward);
+    showModal('battle-result');
+}
+
 function launchDuelFromLink(launchData) {
     if (!launchData || launchData.type !== 'duel') return false;
     if (state.pendingPvp?.roomId === launchData.roomId || PVPClient.roomId === launchData.roomId || state.isBattle) {
@@ -909,15 +940,6 @@ function initApp() {
     safeSetClick('freeze-btn', useFreeze);
     safeSetClick('crystal-btn', useCrystal);
     safeSetClick('magnet-btn', useMagnet);
-    safeSetClick('battle-ready-btn', () => {
-        PVPClient.sendReady();
-        setBattleLobbyStatus(state.lang === 'ru' ? 'Вы готовы. Ждем второго игрока...' : 'You are ready. Waiting for the second player...');
-    });
-    safeSetClick('battle-cancel-btn', () => {
-        PVPClient.cancelRoom();
-        state.pendingPvp = null;
-        setBattleLobbyStatus(state.lang === 'ru' ? 'Ожидание отменено.' : 'Waiting cancelled.');
-    });
     safeSetClick('battle-rematch-btn', () => {
         PVPClient.requestRematch();
         showModal('battle-lobby');
@@ -984,6 +1006,11 @@ function initApp() {
             b.onclick = () => { 
                 Haptics.light(); 
                 const wasLevelModal = !document.getElementById('level-modal').classList.contains('hidden');
+                const wasBattleLobby = !document.getElementById('battle-lobby-modal').classList.contains('hidden');
+                if (wasBattleLobby && state.pendingPvp && !state.isBattle) {
+                    PVPClient.cancelRoom();
+                    state.pendingPvp = null;
+                }
                 closeModal();
                 if (wasLevelModal) {
                     switchScreen('menu');
@@ -1019,6 +1046,16 @@ function initApp() {
         };
     });
 
+    document.querySelectorAll('.duel-diff-tab').forEach(t => {
+        t.onclick = () => {
+            Haptics.light();
+            state.currentDuelDiff = t.dataset.diff || 'easy';
+            localStorage.setItem('mx_duel_diff', state.currentDuelDiff);
+            updateDuelControls();
+        };
+    });
+    updateDuelControls();
+
     document.querySelectorAll('.theme-option').forEach(btn => {
         btn.onclick = () => { 
             Haptics.medium(); 
@@ -1035,16 +1072,17 @@ function initApp() {
             const stake = parseInt(btn.dataset.stake);
             if (state.coins < stake) { Haptics.error(); return showToast(state.lang === 'ru' ? 'Недостаточно монет!' : 'Not enough coins!'); }
             
-            const diff = state.currentDiffTab || 'easy';
+            const diff = state.currentDuelDiff || 'easy';
             const invite = await ServerAPI.createPvpInvite(diff, stake);
             const roomId = invite?.room_id || `host${ServerAPI.getTId()}`;
             const duelPayload = invite?.invite_code
                 ? `duel2_${invite.invite_code}`
                 : `duel_${roomId}_${diff}_${stake}`;
             const duelLink = buildBotStartLink(duelPayload);
+            const diffLabel = I18N[state.lang][diff] || diff;
             const inviteText = state.lang === 'ru'
-                ? `Вызываю тебя на дуэль в MathX! Ставка: ${stake} монет. Нажми Start у бота и открой игру.`
-                : `I challenge you to a MathX duel! Stake: ${stake} coins. Tap Start in the bot and open the game.`;
+                ? `Вызываю тебя на дуэль в MathX! Сложность: ${diffLabel}. Ставка: ${stake} монет. Нажми Start у бота и открой игру.`
+                : `I challenge you to a MathX duel! Difficulty: ${diffLabel}. Stake: ${stake} coins. Tap Start in the bot and open the game.`;
 
             state.battleStake = stake;
             state.battleBotDiff = null;
@@ -1070,6 +1108,7 @@ function initApp() {
             state.lang = btn.dataset.lang;
             localStorage.setItem('mx_lang', state.lang);
             applyLanguage(); updateUI();
+            updateDuelControls();
             if (state.isGameActive) renderGrid(state.lastGeneratedGrid);
             renderLevelMap();
         };
@@ -1393,6 +1432,14 @@ function checkWin() {
     Haptics.success();
     clearInterval(state.timerInterval);
     clearInterval(state.botInterval);
+    if (state.isBattle && !state.battleBotDiff) {
+        state.activeSession = null;
+        localStorage.removeItem('mx_active_session');
+        setBattleLobbyStatus(state.lang === 'ru' ? 'Победа подтверждается сервером...' : 'Confirming victory with server...');
+        PVPClient.sendWin();
+        return;
+    }
+
     state.stats.totalSolved++;
     
     // Track today's solved count
@@ -1425,7 +1472,6 @@ function checkWin() {
     if (state.isDaily) addTransaction('earned', 'daily', reward);
     else if (state.isBattle) {
         addTransaction('earned', 'battle', reward);
-        if (!state.battleBotDiff) PVPClient.sendWin();
     }
     else addTransaction('earned', 'level', reward);
     let xpGained = 20;

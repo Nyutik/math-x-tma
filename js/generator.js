@@ -4,7 +4,19 @@
 
     // Быстрый и надежный генератор случайных чисел по сиду
     class SeededRNG {
-        constructor(seed) { this.seed = seed; }
+        constructor(seed) { this.seed = this.normalizeSeed(seed); }
+        normalizeSeed(seed) {
+            if (typeof seed === 'number' && Number.isFinite(seed)) {
+                const normalized = Math.abs(Math.floor(seed)) % 2147483647;
+                return normalized || 1;
+            }
+            const text = String(seed || 'mathx');
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                hash = (hash * 31 + text.charCodeAt(i)) % 2147483647;
+            }
+            return hash || 1;
+        }
         next() {
             this.seed = (this.seed * 16807) % 2147483647;
             return (this.seed - 1) / 2147483646;

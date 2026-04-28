@@ -446,7 +446,7 @@ async def claim_mission(data: MissionClaim):
 
 @app.post("/pvp/invite")
 async def create_pvp_invite(data: PVPInviteReq):
-    difficulty = data.difficulty if data.difficulty in {"easy", "medium", "hard"} else "easy"
+    difficulty = data.difficulty if data.difficulty in {"easy", "medium", "hard", "expert"} else "easy"
     stake = max(1, int(data.stake or 50))
     room_id = f"host{data.telegram_id}"
     invite_code = uuid.uuid4().hex[:12]

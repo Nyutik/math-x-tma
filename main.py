@@ -59,6 +59,17 @@ if dp:
         }
         
         t = texts.get(lang[:2], texts["en"])
+        if start_param and start_param.startswith("duel"):
+            if lang[:2] == "ru":
+                t = {
+                    "cap": f"{name}, тебя вызвали на дуэль в MathX.\n\nНажми кнопку ниже, чтобы сразу открыть игру и войти в комнату.",
+                    "btn": "⚔️ Открыть дуэль"
+                }
+            else:
+                t = {
+                    "cap": f"{name}, you've been challenged to a MathX duel.\n\nTap the button below to open the game and join the room.",
+                    "btn": "⚔️ Open Duel"
+                }
         builder = InlineKeyboardBuilder()
         if start_param:
             builder.row(types.InlineKeyboardButton(

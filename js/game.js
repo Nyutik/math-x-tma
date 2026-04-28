@@ -648,6 +648,12 @@ function buildMiniAppLink(startParam = '') {
     return `${base}?startapp=${encodeURIComponent(startParam)}`;
 }
 
+function buildBotStartLink(startParam = '') {
+    const base = `https://t.me/${BOT_USERNAME}`;
+    if (!startParam) return base;
+    return `${base}?start=${encodeURIComponent(startParam)}`;
+}
+
 function markExternalNavigation() {
     state.externalNavigationUntil = Date.now() + 12000;
 }
@@ -1032,12 +1038,13 @@ function initApp() {
             const diff = state.currentDiffTab || 'easy';
             const invite = await ServerAPI.createPvpInvite(diff, stake);
             const roomId = invite?.room_id || `host${ServerAPI.getTId()}`;
-            const duelLink = invite?.invite_code
-                ? buildMiniAppLink(`duel2_${invite.invite_code}`)
-                : buildMiniAppLink(`duel_${roomId}_${diff}_${stake}`);
+            const duelPayload = invite?.invite_code
+                ? `duel2_${invite.invite_code}`
+                : `duel_${roomId}_${diff}_${stake}`;
+            const duelLink = buildBotStartLink(duelPayload);
             const inviteText = state.lang === 'ru'
-                ? `ВЫЗЫВАЮ ТЕБЯ НА ДУЭЛЬ! Ставка: ${stake} монет.`
-                : `I CHALLENGE YOU TO A DUEL! Stake: ${stake} coins.`;
+                ? `Вызываю тебя на дуэль в MathX! Ставка: ${stake} монет. Нажми Start у бота и открой игру.`
+                : `I challenge you to a MathX duel! Stake: ${stake} coins. Tap Start in the bot and open the game.`;
 
             state.battleStake = stake;
             state.battleBotDiff = null;

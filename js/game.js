@@ -928,8 +928,7 @@ function initApp() {
         clearInterval(state.timerInterval);
         clearInterval(state.botInterval);
         state.isGameActive = false;
-        state.activeSession = null;
-        localStorage.removeItem('mx_active_session');
+        saveCurrentToSession(true);
         switchScreen('menu');
         updateUI();
         if (typeof AudioManager !== 'undefined') AudioManager.playMusic();
